@@ -899,6 +899,16 @@
             <div class="field"><label>API key</label><input type="password" placeholder="GHL Private API key (eyJh... or sk-...)" id="ghl-key" oninput="ghlCredChanged(); debouncedSave()"></div>
             <div class="field"><label>Location ID</label><input placeholder="Sub-account / Location ID from GHL" id="ghl-loc" oninput="ghlCredChanged(); debouncedSave()"></div>
             <div class="field"><label>XLeads pipeline ID</label><input placeholder="Pipeline ID (from GHL → Pipelines → copy ID)" id="ghl-pipe" oninput="debouncedSave()"></div>
+            <div class="field">
+              <div class="u-field-label">
+                <label>CORS proxy URL <span style="font-size:10px;font-family:var(--mono);color:var(--muted);font-weight:400">(optional)</span></label>
+                <span id="proxy-status" class="u-status"></span>
+              </div>
+              <input placeholder="https://ghl-proxy.your-name.workers.dev" id="ghl-proxy" oninput="debouncedSave()" style="font-family:var(--mono);font-size:12px">
+              <div style="font-size:11px;color:var(--muted);margin-top:5px;line-height:1.6">
+                Deploy the included <code style="font-family:var(--mono);background:var(--surface2);padding:1px 5px;border-radius:3px">worker.js</code> to Cloudflare Workers (free) to fix Custom Objects CORS. Leave blank to use direct GHL API.
+              </div>
+            </div>
             <div class="u-flex-center" style="margin-bottom:16px">
               <button class="btn btn-primary" id="ghl-test-btn" onclick="testGHL()">
                 <span id="ghl-test-icon">⚡</span> Test connection
@@ -986,6 +996,7 @@ function saveAllSettings() {
     ghlKey:          (document.getElementById('ghl-key')         || {}).value || '',
     ghlLoc:          (document.getElementById('ghl-loc')         || {}).value || '',
     ghlPipe:         (document.getElementById('ghl-pipe')        || {}).value || '',
+    ghlProxy:        (document.getElementById('ghl-proxy')       || {}).value || '',
     autofixSetting:  (document.getElementById('autofix-setting') || {}).value || 'yes',
     defaultTags:     (document.getElementById('default-tags')    || {}).value || '',
     defaultPipeline: (document.getElementById('default-pipeline-select') || {}).value || '',
@@ -1009,6 +1020,8 @@ function restoreSettings() {
   set('ghl-key', s.ghlKey);
   set('ghl-loc', s.ghlLoc);
   set('ghl-pipe', s.ghlPipe);
+  set('ghl-proxy', s.ghlProxy);
+  if (s.ghlProxy) { const ps = document.getElementById('proxy-status'); if (ps) { ps.textContent = '✓ Proxy configured'; ps.style.color = 'var(--accent)'; } }
   set('autofix-setting', s.autofixSetting);
   set('default-tags', s.defaultTags);
   // Default pipeline select
@@ -1167,6 +1180,7 @@ const state = {
   sheetsSAJson: null,
   sheetsApiKey: '',
   ghlConnected: false,
+  ghlProxy: '',
   savedImportConfig: null,
   ghlPipelines: [],
   ghlSchemas: [],
@@ -3084,7 +3098,15 @@ async function testGHL() {
   await sleep(200);
 
   // ── STEP 3: GET /locations/:locationId ───────────────────────
-  const baseUrl = 'https://services.leadconnectorhq.com';
+  const proxyUrl = ((document.getElementById('ghl-proxy') || {}).value || '').trim().replace(/\/$/, '');
+  const baseUrl   = proxyUrl || 'https://services.leadconnectorhq.com';
+  const usingProxy = !!proxyUrl;
+  if (usingProxy) {
+    addGhlLog('INFO', 'CORS proxy active', `All GHL API calls routed via: ${proxyUrl}`, null);
+    state.ghlProxy = proxyUrl;
+    const ps = document.getElementById('proxy-status');
+    if (ps) { ps.textContent = '✓ Proxy active'; ps.style.color = 'var(--accent)'; }
+  }
   const endpoint = `/locations/${loc}`;
   addGhlLog('CMD', `GET ${baseUrl}${endpoint}`, null, 'Fetching location details');
   addGhlLog('INFO', 'Request headers', `Authorization: Bearer ${key.slice(0,8)}… | Version: 2021-07-28`, null);
