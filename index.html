@@ -3273,7 +3273,8 @@ async function testGHL() {
   }
   await sleep(200);
 
-  // Fetch custom objects → all fields merged into Property schema
+  // Fetch custom objects list, then fetch fields for each object individually
+  // The GHL list endpoint does NOT return field definitions — must call per-object endpoint
   try {
     const coRes  = await fetch(`${baseUrl}${customObjEndpoint}`, {
       headers: { 'Authorization': `Bearer ${key}`, 'Version': '2021-07-28' }
@@ -3281,32 +3282,118 @@ async function testGHL() {
     const coBody = await coRes.json().catch(() => ({}));
     if (coRes.ok) {
       const customObjects = coBody.customObjects || coBody.objects || [];
-      addGhlLog('OK', `HTTP ${coRes.status} — ${customObjects.length} custom property object(s)`,
-        customObjects.map(o => o.name || o.labels?.singular).join(', ').slice(0,120) || 'none', null);
+      addGhlLog('OK', `HTTP ${coRes.status} — ${customObjects.length} custom object(s) found`,
+        customObjects.map(o => o.labels?.singular || o.name).join(', ').slice(0,120) || 'none', null);
+
       let allPropFields = [];
-      customObjects.forEach((obj, i) => {
-        const objName   = obj.name || obj.labels?.singular || `Object ${i+1}`;
-        const objFields = obj.fields || obj.schema?.fields || [];
-        addGhlLog('INFO', `Property object ${i+1}: ${objName}`,
-          `Key: ${obj.key || obj.id} | Fields: ${objFields.length} | ${objFields.slice(0,6).map(f => f.label || f.name).join(', ')}`, null);
-        allPropFields = [...allPropFields, ...objFields.map(f => ({
-          key: f.key || f.fieldKey || f.id, label: f.label || f.name,
-          type: f.dataType || f.type || 'TEXT', object: objName
-        }))];
-      });
+
+      // Fetch fields for each object individually (list endpoint omits field definitions)
+      for (let i = 0; i < customObjects.length; i++) {
+        const obj     = customObjects[i];
+        const objKey  = obj.key || obj.id;
+        const objName = obj.labels?.singular || obj.name || `Object ${i+1}`;
+
+        // Try both known field endpoints for this object
+        let objFields = [];
+
+        // Attempt 1: GET /custom-objects/:key (full object detail)
+        const detailEndpoint = `/custom-objects/${objKey}`;
+        addGhlLog('CMD', `GET ${baseUrl}${detailEndpoint}`, null, `Fetching fields for '${objName}'`);
+        try {
+          const dRes  = await fetch(`${baseUrl}${detailEndpoint}`, {
+            headers: { 'Authorization': `Bearer ${key}`, 'Version': '2021-07-28' }
+          });
+          const dBody = await dRes.json().catch(() => ({}));
+          if (dRes.ok) {
+            // Log raw response keys so we can find where fields actually live
+            const dKeys = Object.keys(dBody);
+            addGhlLog('INFO', `Raw response keys for '${objName}'`, dKeys.join(', ') || '(empty object)', null);
+            // Dig one level deeper on each key to find arrays
+            dKeys.forEach(k => {
+              const v = dBody[k];
+              if (Array.isArray(v)) addGhlLog('INFO', `  dBody.${k} = Array(${v.length})`, v.slice(0,3).map(x => JSON.stringify(x).slice(0,60)).join(' | '), null);
+              else if (v && typeof v === 'object') addGhlLog('INFO', `  dBody.${k} = Object{${Object.keys(v).join(',')}}`, '', null);
+            });
+            // Fields may live at multiple paths depending on GHL version
+            objFields = dBody.fields
+              || dBody.customObject?.fields
+              || dBody.object?.fields
+              || dBody.schema?.fields
+              || dBody.customObjects?.[0]?.fields
+              || [];
+            addGhlLog('OK', `HTTP ${dRes.status} — '${objName}' detail: ${objFields.length} field(s) found`,
+              objFields.slice(0,8).map(f => f.label || f.name).join(', ') + (objFields.length > 8 ? '…' : ''), null);
+          } else {
+            addGhlLog('WARN', `HTTP ${dRes.status} — detail fetch failed for '${objName}'`, dBody.message || '', null);
+            addGhlLog('INFO', `Raw error body: ${JSON.stringify(dBody).slice(0,200)}`, '', null);
+          }
+        } catch (detailErr) {
+          addGhlLog('WARN', `Detail fetch error for '${objName}'`, sanitiseHTML(detailErr.message), null);
+        }
+
+        // Attempt 2: if still no fields try /custom-objects/:key/fields
+        if (!objFields.length) {
+          const fieldsEndpoint = `/custom-objects/${objKey}/fields`;
+          addGhlLog('CMD', `GET ${baseUrl}${fieldsEndpoint}`, null, `Trying fields sub-endpoint for '${objName}'`);
+          try {
+            const fRes  = await fetch(`${baseUrl}${fieldsEndpoint}`, {
+              headers: { 'Authorization': `Bearer ${key}`, 'Version': '2021-07-28' }
+            });
+            const fBody = await fRes.json().catch(() => ({}));
+            if (fRes.ok) {
+              const fKeys = Object.keys(fBody);
+              addGhlLog('INFO', `Fields endpoint raw keys: ${fKeys.join(', ')}`, '', null);
+              fKeys.forEach(k => {
+                const v = fBody[k];
+                if (Array.isArray(v)) addGhlLog('INFO', `  fBody.${k} = Array(${v.length})`, v.slice(0,2).map(x => JSON.stringify(x).slice(0,60)).join(' | '), null);
+              });
+              objFields = fBody.fields || fBody.customFields || fBody.customObjects?.[0]?.fields || [];
+              addGhlLog('OK', `HTTP ${fRes.status} — '${objName}' fields: ${objFields.length} field(s)`,
+                objFields.slice(0,8).map(f => f.label || f.name).join(', ') + (objFields.length > 8 ? '…' : ''), null);
+            } else {
+              addGhlLog('WARN', `HTTP ${fRes.status} — fields sub-endpoint failed`, fBody.message || '', null);
+              addGhlLog('INFO', `Raw error: ${JSON.stringify(fBody).slice(0,200)}`, '', null);
+            }
+          } catch (fieldsErr) {
+            addGhlLog('WARN', `Fields sub-endpoint error for '${objName}'`, sanitiseHTML(fieldsErr.message), null);
+          }
+        }
+
+        // Log full list of object's fields
+        if (objFields.length) {
+          addGhlLog('INFO', `'${objName}' — ${objFields.length} field(s)`,
+            objFields.map(f => f.label || f.name).join(', ').slice(0,200), null);
+          allPropFields = [...allPropFields, ...objFields.map(f => ({
+            key:    f.key || f.fieldKey || f.id,
+            label:  f.label || f.name,
+            type:   f.dataType || f.fieldType || f.type || 'TEXT',
+            object: objName
+          }))];
+        } else {
+          addGhlLog('WARN', `No fields returned for '${objName}'`,
+            'Object exists but field definitions could not be retrieved — check API key scopes', null);
+        }
+
+        await sleep(150); // small delay between per-object calls
+      }
+
       propertySchema.fields      = allPropFields;
       propertySchema.description = allPropFields.length
-        ? `${allPropFields.length} field(s) across ${customObjects.length} custom property object(s)`
-        : 'No custom property objects found in this GHL location';
+        ? `${allPropFields.length} field(s) across ${customObjects.length} custom object(s)`
+        : 'Custom objects found but no field definitions returned — check API key scopes';
+
       if (allPropFields.length) {
-        addGhlLog('INFO', `Property schema — all fields (${allPropFields.length})`,
-          allPropFields.map(f => f.label).join(', ').slice(0,160), null);
+        addGhlLog('OK', `Property schema complete — ${allPropFields.length} total field(s) from ${customObjects.length} object(s)`,
+          allPropFields.map(f => f.label).join(', ').slice(0,200), null);
+      } else if (customObjects.length) {
+        addGhlLog('WARN', 'Objects found but 0 fields loaded',
+          'Ensure your Private Integration key has "Custom Objects — Read" scope enabled in GHL', null);
       } else {
-        addGhlLog('INFO', 'No custom property objects found',
-          'Create custom objects in GHL to populate the Property schema', null);
+        addGhlLog('INFO', 'No custom objects in this GHL location',
+          'Create custom objects in GHL → Settings → Custom Objects to populate the Property schema', null);
       }
     } else {
-      addGhlLog('WARN', `Custom objects HTTP ${coRes.status}`, coBody.message || 'Could not fetch', null);
+      addGhlLog('WARN', `Custom objects list HTTP ${coRes.status}`, coBody.message || 'Could not fetch object list', null);
     }
   } catch (e) {
     addGhlLog('WARN', 'Custom objects fetch failed', sanitiseHTML(e.message), 'Non-fatal');
