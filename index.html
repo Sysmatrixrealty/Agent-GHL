@@ -3064,8 +3064,8 @@ async function testGHL() {
     return finishGhlTest(false, 'Missing API key', btn, icon, status, badge);
   }
   addGhlLog('OK', 'API key format', `length=${key.length}, prefix=${key.slice(0,6)}...`);
-  if (!key.startsWith('eyJ') && !key.startsWith('sk-')) {
-    addGhlLog('WARN', 'Unrecognised key prefix', 'Expected eyJ... (Private Integration JWT) or sk-... (Agency key) — verify in GHL Settings → API → Private Integrations', null);
+  if (!key.startsWith('eyJ') && !key.startsWith('sk-') && !key.startsWith('pit-')) {
+    addGhlLog('WARN', 'Unrecognised key prefix', 'Expected eyJ... (JWT), pit-... (Private Integration Token), or sk-... (Agency key)', null);
   }
 
   if (!loc || loc.length < 8) {
@@ -3273,17 +3273,150 @@ async function testGHL() {
   }
   await sleep(200);
 
-  // Fetch custom objects list, then fetch fields for each object individually
-  // The GHL list endpoint does NOT return field definitions — must call per-object endpoint
+  // ── SCOPE PROBE: Test all 4 GHL Objects scopes before fetching data ─────────
+  // Maps to GHL Private Integration permissions:
+  //   objects/schema.readonly  → GET /custom-objects              (View Object Schema)
+  //   objects/records.readonly → GET /custom-objects/:key/records (View Object Records)
+  //   objects/schema.write     → probed via schema endpoint response
+  //   objects/records/write    → probed via records endpoint response
+  addGhlLog('INFO', '━━━ Objects scope probe ━━━', 'Testing 4 GHL Objects permissions against your PIT key', null);
+
+  const scopeResults = {};
+
+  // PROBE 1: objects/schema.readonly — GET /custom-objects (list schemas)
+  addGhlLog('CMD', `GET ${baseUrl}/custom-objects?locationId=${loc}`,
+    null, 'Scope probe: objects/schema.readonly (View Object Schema)');
   try {
-    const coRes  = await fetch(`${baseUrl}${customObjEndpoint}`, {
+    const s1 = await fetch(`${baseUrl}/custom-objects?locationId=${loc}`, {
       headers: { 'Authorization': `Bearer ${key}`, 'Version': '2021-07-28' }
     });
+    const s1Body = await s1.json().catch(() => ({}));
+    scopeResults.schemaRead = s1.status;
+    if (s1.ok) {
+      const objCount = (s1Body.customObjects || s1Body.objects || []).length;
+      addGhlLog('OK',
+        `objects/schema.readonly ✓ — HTTP ${s1.status}`,
+        `View Object Schema scope active | ${objCount} custom object(s) found`, null);
+    } else {
+      addGhlLog('WARN',
+        `objects/schema.readonly ✗ — HTTP ${s1.status}`,
+        s1.status === 401 ? 'NOT AUTHORISED — enable "View Object Schema" (objects/schema.readonly) on your PIT key'
+        : s1.status === 403 ? 'FORBIDDEN — scope missing or plan does not include Custom Objects'
+        : s1Body.message || 'Unexpected error', null);
+    }
+  } catch (e1) {
+    scopeResults.schemaRead = 'ERR';
+    addGhlLog('WARN', `objects/schema.readonly ✗ — Failed to fetch`,
+      `Network error: ${sanitiseHTML(e1.message)} — key may lack scope or Custom Objects not enabled on this GHL plan`, null);
+  }
+  await sleep(200);
+
+  // PROBE 2: objects/records.readonly — GET /custom-objects/:key/records?limit=1
+  // We need at least one object key to test records — use a generic probe first
+  // Try the schema read result to get an object key
+  let firstObjKey = null;
+  try {
+    const schRes = await fetch(`${baseUrl}/custom-objects?locationId=${loc}`, {
+      headers: { 'Authorization': `Bearer ${key}`, 'Version': '2021-07-28' }
+    });
+    if (schRes.ok) {
+      const schBody = await schRes.json().catch(() => ({}));
+      const objs = schBody.customObjects || schBody.objects || [];
+      if (objs.length) firstObjKey = objs[0].key || objs[0].id;
+    }
+  } catch(_) {}
+
+  if (firstObjKey) {
+    const recordsEndpoint = `/custom-objects/${firstObjKey}/records?locationId=${loc}&limit=1`;
+    addGhlLog('CMD', `GET ${baseUrl}${recordsEndpoint}`,
+      null, 'Scope probe: objects/records.readonly (View Object Records)');
+    try {
+      const s2 = await fetch(`${baseUrl}${recordsEndpoint}`, {
+        headers: { 'Authorization': `Bearer ${key}`, 'Version': '2021-07-28' }
+      });
+      const s2Body = await s2.json().catch(() => ({}));
+      scopeResults.recordsRead = s2.status;
+      if (s2.ok) {
+        const recCount = (s2Body.records || s2Body.data || []).length;
+        addGhlLog('OK',
+          `objects/records.readonly ✓ — HTTP ${s2.status}`,
+          `View Object Records scope active | sample record count: ${recCount}`, null);
+      } else {
+        addGhlLog('WARN',
+          `objects/records.readonly ✗ — HTTP ${s2.status}`,
+          s2.status === 401 ? 'NOT AUTHORISED — enable "View Object Record" (objects/records.readonly) on your PIT key'
+          : s2.status === 403 ? 'FORBIDDEN — records scope missing'
+          : s2Body.message || 'Unexpected error', null);
+      }
+    } catch (e2) {
+      scopeResults.recordsRead = 'ERR';
+      addGhlLog('WARN', `objects/records.readonly ✗ — Failed to fetch`,
+        `Network error: ${sanitiseHTML(e2.message)}`, null);
+    }
+  } else {
+    addGhlLog('INFO', 'objects/records.readonly — skipped',
+      'Could not probe record read scope: no custom object key available (schema read may have failed)', null);
+  }
+  await sleep(200);
+
+  // PROBE 3: objects/schema.write — infer from schema endpoint HTTP method options
+  // GHL does not expose a safe read-only probe for write scopes
+  // We detect write scope by checking if the schema endpoint returns 405 on OPTIONS
+  // Instead: log the scope status based on what GHL returns on a schema HEAD request
+  addGhlLog('CMD', `HEAD ${baseUrl}/custom-objects?locationId=${loc}`,
+    null, 'Scope probe: objects/schema.write (Edit Object Schema) — inferring from HEAD');
+  try {
+    const s3 = await fetch(`${baseUrl}/custom-objects?locationId=${loc}`, {
+      method: 'HEAD',
+      headers: { 'Authorization': `Bearer ${key}`, 'Version': '2021-07-28' }
+    });
+    scopeResults.schemaWrite = s3.status;
+    // HEAD returning 200 with schema.readonly active is expected
+    // We can't truly verify write without posting — note this
+    addGhlLog('INFO',
+      `objects/schema.write — HEAD HTTP ${s3.status}`,
+      s3.status === 200 ? 'HEAD request succeeded — write scope cannot be verified without a POST. Check GHL PIT key settings directly.'
+      : s3.status === 405 ? 'HEAD not supported — this is normal. Check GHL PIT key settings for Edit Object Schema scope.'
+      : `HTTP ${s3.status} — check GHL PIT key settings for Edit Object Schema scope`, null);
+  } catch (e3) {
+    scopeResults.schemaWrite = 'ERR';
+    addGhlLog('INFO', 'objects/schema.write — could not probe', sanitiseHTML(e3.message), null);
+  }
+  await sleep(150);
+
+  // PROBE 4: objects/records/write — same limitation, log intent
+  addGhlLog('INFO', 'objects/records/write (Edit Object Record) — not probed (write-only)',
+    'Write scopes cannot be safely tested without creating/modifying records. Verify in GHL → Settings → Private Integrations → your key.', null);
+
+  // Scope summary
+  addGhlLog('INFO', '━━━ Scope probe summary ━━━',
+    `schema.readonly: ${scopeResults.schemaRead === 200 ? '✓' : '✗ ' + scopeResults.schemaRead} | ` +
+    `records.readonly: ${scopeResults.recordsRead === 200 ? '✓' : '✗ ' + (scopeResults.recordsRead || 'skipped')} | ` +
+    `schema.write: see above | records.write: not probed`, null);
+  await sleep(100);
+
+  // ── Now fetch data using whichever version worked ──────────────────────────
+  let coRes = null;
+  if (scopeResults.schemaRead === 200) {
+    try {
+      coRes = await fetch(`${baseUrl}${customObjEndpoint}`, {
+        headers: { 'Authorization': `Bearer ${key}`, 'Version': '2021-07-28' }
+      });
+      if (!coRes.ok) coRes = null;
+    } catch(_) { coRes = null; }
+  }
+  try {
+  if (!coRes) {
+    addGhlLog('WARN', 'Skipping custom object field fetch — schema read scope not available',
+      'Enable "View Object Schema" (objects/schema.readonly) on your PIT key to load Property fields', null);
+    throw new Error('custom-objects schema read not authorised');
+  }
     const coBody = await coRes.json().catch(() => ({}));
     if (coRes.ok) {
       const customObjects = coBody.customObjects || coBody.objects || [];
       addGhlLog('OK', `HTTP ${coRes.status} — ${customObjects.length} custom object(s) found`,
         customObjects.map(o => o.labels?.singular || o.name).join(', ').slice(0,120) || 'none', null);
+
 
       let allPropFields = [];
 
