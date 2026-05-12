@@ -3457,11 +3457,11 @@ async function testGHL() {
         let objFields = [];
 
         // Attempt 1: GET /custom-objects/:key (full object detail)
-        const detailEndpoint = `/custom-objects/${objKey}`;
+        const detailEndpoint = `/custom-objects/${objKey}?locationId=${loc}&fetchProperties=true`;
         addGhlLog('CMD', `GET ${baseUrl}${detailEndpoint}`, null, `Fetching fields for '${objName}'`);
         try {
           const dRes  = await fetch(`${baseUrl}${detailEndpoint}`, {
-            headers: { 'Authorization': `Bearer ${key}`, 'Version': '2021-07-28' }
+            headers: { 'Authorization': `Bearer ${key}`, 'Version': '2023-02-21' }
           });
           const dBody = await dRes.json().catch(() => ({}));
           if (dRes.ok) {
@@ -3476,9 +3476,13 @@ async function testGHL() {
             });
             // Fields may live at multiple paths depending on GHL version
             objFields = dBody.fields
+              || dBody.properties
               || dBody.customObject?.fields
+              || dBody.customObject?.properties
               || dBody.object?.fields
+              || dBody.object?.properties
               || dBody.schema?.fields
+              || dBody.schema?.properties
               || dBody.customObjects?.[0]?.fields
               || [];
             addGhlLog('OK', `HTTP ${dRes.status} — '${objName}' detail: ${objFields.length} field(s) found`,
