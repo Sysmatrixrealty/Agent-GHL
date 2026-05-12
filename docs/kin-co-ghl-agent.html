@@ -3475,7 +3475,7 @@ async function testGHL() {
               else if (v && typeof v === 'object') addGhlLog('INFO', `  dBody.${k} = Object{${Object.keys(v).join(',')}}`, '', null);
             });
             // Fields may live at multiple paths depending on GHL version
-            objFields = dBody.fields
+            let rawFields = dBody.fields
               || dBody.properties
               || dBody.customObject?.fields
               || dBody.customObject?.properties
@@ -3485,8 +3485,40 @@ async function testGHL() {
               || dBody.schema?.properties
               || dBody.customObjects?.[0]?.fields
               || [];
+            
+            // Handle both Array and Object (map) formats
+            if (rawFields && !Array.isArray(rawFields) && typeof rawFields === 'object') {
+              objFields = Object.values(rawFields);
+            } else {
+              objFields = rawFields || [];
+            }
+
             addGhlLog('OK', `HTTP ${dRes.status} — '${objName}' detail: ${objFields.length} field(s) found`,
               objFields.slice(0,8).map(f => f.label || f.name).join(', ') + (objFields.length > 8 ? '…' : ''), null);
+
+            // Handle Pagination if present
+            let nextUrl = dBody.meta?.nextPage || dBody.nextPage;
+            let pageCount = 1;
+            while (nextUrl && pageCount < 10) { // Safety limit 10 pages
+              addGhlLog('CMD', `GET ${nextUrl}`, null, `Fetching next page of fields for '${objName}' (Page ${pageCount+1})`);
+              try {
+                const pRes = await fetch(nextUrl, {
+                  headers: { 'Authorization': `Bearer ${key}`, 'Version': '2023-02-21' }
+                });
+                const pBody = await pRes.json().catch(() => ({}));
+                if (pRes.ok) {
+                  let pRaw = pBody.fields || pBody.properties || pBody.schema?.fields || pBody.schema?.properties || [];
+                  let pFields = Array.isArray(pRaw) ? pRaw : (pRaw && typeof pRaw === 'object' ? Object.values(pRaw) : []);
+                  objFields = [...objFields, ...pFields];
+                  nextUrl = pBody.meta?.nextPage || pBody.nextPage;
+                  pageCount++;
+                } else {
+                  nextUrl = null;
+                }
+              } catch (pErr) {
+                nextUrl = null;
+              }
+            }
           } else {
             addGhlLog('WARN', `HTTP ${dRes.status} — detail fetch failed for '${objName}'`, dBody.message || '', null);
             addGhlLog('INFO', `Raw error body: ${JSON.stringify(dBody).slice(0,200)}`, '', null);
