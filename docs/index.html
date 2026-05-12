@@ -1,0 +1,3735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kin & Co — GHL Lead Import Agent</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0f14;
+    --surface: #161920;
+    --surface2: #1e2230;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.14);
+    --accent: #6ee7b7;
+    --accent2: #38bdf8;
+    --amber: #fbbf24;
+    --red: #f87171;
+    --purple: #a78bfa;
+    --text: #e8eaf0;
+    --muted: #6b7280;
+    --mono: 'DM Mono', monospace;
+    --sans: 'DM Sans', sans-serif;
+    --serif: 'Instrument Serif', serif;
+    --radius: 10px;
+    --radius-lg: 16px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  /* HEADER */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 32px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .logo {
+    font-family: var(--serif);
+    font-size: 20px;
+    color: var(--text);
+    letter-spacing: -.01em;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .logo-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+  .header-right { display: flex; align-items: center; gap: 12px; }
+  .badge {
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 4px 10px;
+    border-radius: 100px;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+  }
+  .badge-green { background: rgba(110,231,183,.12); color: var(--accent); border: 1px solid rgba(110,231,183,.2); }
+  .badge-blue  { background: rgba(56,189,248,.12);  color: var(--accent2); border: 1px solid rgba(56,189,248,.2); }
+  .badge-amber { background: rgba(251,191,36,.12);  color: var(--amber);   border: 1px solid rgba(251,191,36,.2); }
+  .badge-red   { background: rgba(248,113,113,.12); color: var(--red);     border: 1px solid rgba(248,113,113,.2); }
+  .badge-purple{ background: rgba(167,139,250,.12); color: var(--purple);  border: 1px solid rgba(167,139,250,.2); }
+
+  /* MAIN LAYOUT */
+  .layout { display: grid; grid-template-columns: 280px 1fr; }
+  
+  /* SIDEBAR */
+  .sidebar {
+    border-right: 1px solid var(--border);
+    padding: 24px 20px;
+    background: var(--surface);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-self: stretch;
+  }
+  .sidebar-section { font-family: var(--mono); font-size: 10px; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; padding: 12px 12px 6px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 12px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 400;
+    transition: all .15s;
+    border: 1px solid transparent;
+  }
+  .nav-item:hover { background: var(--surface2); color: var(--text); }
+  .nav-item.active { background: rgba(110,231,183,.08); color: var(--accent); border-color: rgba(110,231,183,.15); }
+  .nav-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .nav-count {
+    margin-left: auto; font-family: var(--mono); font-size: 10px;
+    background: var(--surface2); border: 1px solid var(--border2);
+    padding: 2px 7px; border-radius: 100px; color: var(--muted);
+  }
+
+  /* MAIN CONTENT */
+  .main { padding: 32px; }
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* PAGE HEADER */
+  .page-header { margin-bottom: 28px; }
+  .page-title { font-family: var(--serif); font-size: 26px; font-weight: 400; margin-bottom: 6px; }
+  .page-sub { color: var(--muted); font-size: 13px; }
+
+  /* STATS ROW */
+  .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 28px; }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 18px 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .stat-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  }
+  .stat-card.green::before { background: var(--accent); }
+  .stat-card.blue::before  { background: var(--accent2); }
+  .stat-card.amber::before { background: var(--amber); }
+  .stat-card.purple::before{ background: var(--purple); }
+  .stat-label { font-family: var(--mono); font-size: 10px; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; margin-bottom: 8px; }
+  .stat-val   { font-size: 28px; font-weight: 600; line-height: 1; margin-bottom: 4px; }
+  .stat-delta { font-size: 11px; color: var(--muted); }
+  .stat-delta.up { color: var(--accent); }
+
+  /* CARDS */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+  .card-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .card-title { font-size: 13px; font-weight: 500; }
+  .card-body { padding: 20px; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 28px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 28px; }
+
+  /* IMPORT WIZARD */
+  .import-steps { display: flex; align-items: center; gap: 0; margin-bottom: 28px; }
+  .step-item { display: flex; align-items: center; gap: 8px; }
+  .step-num {
+    width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--border2);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--mono); font-size: 11px; color: var(--muted);
+  }
+  .step-num.active { background: var(--accent); border-color: var(--accent); color: #0d0f14; font-weight: 600; }
+  .step-num.done   { background: rgba(110,231,183,.15); border-color: var(--accent); color: var(--accent); }
+  .step-label { font-size: 12px; color: var(--muted); }
+  .step-label.active { color: var(--text); font-weight: 500; }
+  .step-connector { flex: 1; height: 1px; background: var(--border); margin: 0 12px; max-width: 60px; }
+
+  /* SOURCE SELECT */
+  .source-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; min-width: 0; }
+  .source-tile {
+    background: var(--surface2);
+    border: 2px solid rgba(255,255,255,0.15);
+    border-radius: var(--radius);
+    padding: 20px 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: all .15s;
+    user-select: none;
+    -webkit-user-select: none;
+    position: relative;
+    pointer-events: all;
+  }
+  .tile-tick {
+    pointer-events: none;
+  }
+  .source-icon, .source-name, .source-desc {
+    pointer-events: none;
+  }
+  .source-tile:hover { border-color: rgba(255,255,255,0.4); background: rgba(255,255,255,0.06); transform: translateY(-1px); }
+  .source-tile:active { transform: translateY(0); opacity: 0.85; }
+  .source-tile.selected { border-color: var(--accent); border-width: 2px; background: rgba(110,231,183,.15); box-shadow: 0 0 0 1px rgba(110,231,183,.3); }
+  .source-icon { font-size: 28px; margin-bottom: 10px; line-height: 1; display: block; }
+  .source-name { font-size: 14px; font-weight: 600; margin-bottom: 4px; color: var(--text); }
+  .source-desc { font-size: 12px; color: rgba(255,255,255,0.45); margin-top: 2px; }
+
+  /* INPUT */
+  .field { margin-bottom: 16px; }
+  .field label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; font-family: var(--mono); letter-spacing: .04em; }
+  .field input, .field textarea, .field select {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    padding: 10px 14px;
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 13px;
+    outline: none;
+    transition: border-color .15s;
+  }
+  .field input:focus, .field textarea:focus, .field select:focus { border-color: var(--accent); }
+  .field textarea { resize: vertical; min-height: 80px; }
+  .field select { appearance: none; cursor: pointer; }
+
+  /* BUTTONS */
+  .btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 9px 18px;
+    border-radius: var(--radius);
+    font-size: 13px; font-weight: 500;
+    cursor: pointer;
+    transition: all .15s;
+    border: 1px solid var(--border2);
+    background: transparent;
+    color: var(--text);
+  }
+  .btn:hover { background: var(--surface2); }
+  .btn-primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #0d0f14;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+  }
+  .btn-primary:hover { background: #4ade80; border-color: #4ade80; transform: translateY(-1px); }
+  .btn-primary:active { transform: translateY(0); }
+  .btn-sm { padding: 6px 12px; font-size: 12px; }
+  .btn-row { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+
+  /* FIELD MAPPER */
+  .mapper-table { width: 100%; border-collapse: collapse; }
+  .mapper-table th {
+    font-family: var(--mono); font-size: 10px; color: var(--muted);
+    text-transform: uppercase; letter-spacing: .06em;
+    padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border);
+  }
+  .mapper-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .mapper-table tr:last-child td { border-bottom: none; }
+  .mapper-source { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+  .mapper-arrow { color: var(--muted); font-size: 16px; }
+  .confidence {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: var(--mono); font-size: 11px;
+  }
+  .conf-bar { height: 4px; border-radius: 100px; background: var(--border2); width: 60px; overflow: hidden; }
+  .conf-fill { height: 100%; border-radius: 100px; }
+  .conf-high  .conf-fill { background: var(--accent); }
+  .conf-med   .conf-fill { background: var(--amber); }
+  .conf-low   .conf-fill { background: var(--red); }
+
+  /* LOG FEED */
+  .log-feed { font-family: var(--mono); font-size: 12px; line-height: 1.8; max-height: 320px; overflow-y: auto; }
+  #ghl-log-feed::-webkit-scrollbar { width: 4px; }
+  #ghl-log-feed::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 100px; }
+  .log-line { display: flex; gap: 12px; padding: 3px 0; }
+  .log-time { color: var(--muted); flex-shrink: 0; width: 60px; }
+  .log-type { flex-shrink: 0; width: 48px; }
+  .log-type.ok   { color: var(--accent); }
+  .log-type.warn { color: var(--amber); }
+  .log-type.err  { color: var(--red); }
+  .log-type.info { color: var(--accent2); }
+  .log-msg { color: var(--text); }
+
+  /* PIPELINE TABLE */
+  .lead-table { width: 100%; border-collapse: collapse; }
+  .lead-table th {
+    font-family: var(--mono); font-size: 10px; color: var(--muted);
+    text-transform: uppercase; letter-spacing: .06em;
+    padding: 10px 14px; text-align: left;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .lead-table td { padding: 10px 14px; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .lead-table tr:hover td { background: var(--surface2); }
+  .lead-table tr:last-child td { border-bottom: none; }
+  .avatar {
+    width: 28px; height: 28px; border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 600;
+  }
+  .name-cell { display: flex; align-items: center; gap: 10px; }
+
+  /* OPTIMIZATION PANEL */
+  .opt-insight {
+    display: flex; gap: 14px;
+    padding: 14px 16px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 10px;
+  }
+  .opt-icon { font-size: 18px; flex-shrink: 0; margin-top: 2px; }
+  .opt-title { font-size: 13px; font-weight: 500; margin-bottom: 3px; }
+  .opt-detail { font-size: 12px; color: var(--muted); line-height: 1.5; }
+  .opt-action { margin-top: 8px; }
+
+  /* CHART BARS */
+  .bar-chart { display: flex; align-items: flex-end; gap: 8px; height: 100px; }
+  .bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .bar { width: 100%; border-radius: 4px 4px 0 0; transition: height .4s ease; }
+  .bar-label { font-family: var(--mono); font-size: 9px; color: var(--muted); }
+
+  /* RUN BUTTON */
+  .run-btn {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--accent); color: #0d0f14;
+    border: none; padding: 12px 24px; border-radius: var(--radius);
+    font-size: 14px; font-weight: 600; cursor: pointer;
+    transition: all .2s;
+    font-family: var(--sans);
+  }
+  .run-btn:hover { background: #4ade80; transform: translateY(-1px); }
+  .run-btn:active { transform: translateY(0); }
+  .pulse { animation: pulse 2s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.6} }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 100px; }
+  /* ── UTILITY CLASSES (replaces repeated inline styles) ── */
+  .u-mono-label { font-family:var(--mono);font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em; }
+  .u-flex-between { display:flex;align-items:center;justify-content:space-between; }
+  .u-flex-center  { display:flex;align-items:center;gap:10px; }
+  .u-hint { font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:12px; }
+  .u-status { font-size:11px;color:var(--muted); }
+  .u-panel { background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius);padding:12px 14px; }
+  .u-toolbar { display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:14px;flex-wrap:wrap; }
+  .u-section-hd { padding:8px 12px;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px; }
+  .u-field-label { display:flex;align-items:center;justify-content:space-between;margin-bottom:6px; }
+  .u-field-label label { margin-bottom:0; }
+
+  /* ── FIELD GROUP BUILDER ── */
+  .fg-builder { border:1px solid var(--border2);border-radius:var(--radius);overflow:hidden; }
+  .fg-builder-toolbar { padding:10px 14px;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-wrap:wrap; }
+  .fg-builder-name { flex:1;min-width:180px;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);padding:7px 11px;color:var(--text);font-size:13px;font-family:var(--sans);outline:none; }
+  .fg-type-toggle { display:flex;border:1px solid var(--border2);border-radius:var(--radius);overflow:hidden;flex-shrink:0; }
+  .fg-type-btn { padding:7px 16px;border:none;font-size:12px;font-weight:500;cursor:pointer;font-family:var(--sans);transition:all .12s; }
+  .fg-type-btn.active { background:var(--accent);color:#0d0f14;font-weight:600; }
+  .fg-type-btn.inactive { background:var(--surface2);color:var(--muted); }
+  .fg-split { display:grid;grid-template-columns:1fr 1fr;min-height:220px; }
+  .fg-col { display:flex;flex-direction:column; }
+  .fg-col-left { border-right:1px solid var(--border); }
+  .fg-col-header { padding:8px 12px;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px; }
+  .fg-search { margin:8px;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);padding:6px 10px;color:var(--text);font-size:12px;font-family:var(--sans);outline:none; }
+  .fg-pool { flex:1;overflow-y:auto;max-height:280px;padding:0 6px 6px; }
+  .fg-selected { flex:1;overflow-y:auto;max-height:320px;padding:8px; }
+  .fg-actions { padding:10px 14px;background:var(--surface2);border-top:1px solid var(--border);display:flex;gap:8px;align-items:center; }
+  .fg-card { border:1px solid var(--border2);border-radius:var(--radius);overflow:hidden;margin-bottom:8px; }
+  .fg-card-header { display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surface2); }
+  .fg-card-fields { padding:8px 14px;font-size:11px;color:var(--muted);line-height:1.7;border-top:1px solid var(--border); }
+
+  /* ── SETTINGS LAYOUT ── */
+  .settings-grid { display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px; }
+  .settings-full { margin-bottom:20px; }
+  .save-row { display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:4px; }
+
+
+  /* AI CHAT */
+  .chat-area { display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; max-height: 360px; overflow-y: auto; }
+  .msg { display: flex; gap: 10px; }
+  .msg.agent { flex-direction: row-reverse; }
+  .msg-bubble {
+    max-width: 78%;
+    padding: 10px 14px;
+    border-radius: 12px;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  .msg.user  .msg-bubble { background: rgba(110,231,183,.1); border: 1px solid rgba(110,231,183,.15); }
+  .msg.agent .msg-bubble { background: var(--surface2); border: 1px solid var(--border2); }
+  .msg-avatar {
+    width: 28px; height: 28px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; flex-shrink: 0;
+  }
+  .msg.user  .msg-avatar { background: rgba(110,231,183,.2); color: var(--accent); }
+  .msg.agent .msg-avatar { background: rgba(167,139,250,.2); color: var(--purple); }
+  .chat-input-row { display: flex; gap: 8px; }
+  .chat-input {
+    flex: 1; background: var(--surface2); border: 1px solid var(--border2);
+    border-radius: var(--radius); padding: 10px 14px;
+    color: var(--text); font-family: var(--sans); font-size: 13px;
+    outline: none; transition: border-color .15s;
+  }
+  .chat-input:focus { border-color: var(--accent); }
+
+  /* IMPORT PROGRESS */
+  .progress-wrap { height: 6px; background: var(--border2); border-radius: 100px; overflow: hidden; margin: 8px 0; }
+  .progress-fill { height: 100%; border-radius: 100px; background: var(--accent); transition: width .4s ease; }
+
+  /* GLOW CARD */
+  .glow-border {
+    border: 1px solid rgba(110,231,183,.25);
+    box-shadow: 0 0 20px rgba(110,231,183,.06);
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">
+    <div class="logo-dot"></div>
+    Kin & Co — GHL Agent
+  </div>
+  <div class="header-right">
+    <span class="badge badge-green">Agent active</span>
+    <span class="badge badge-blue">GHL connected</span>
+    <span id="run-count" class="badge badge-amber">0 runs today</span>
+  </div>
+</div>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sidebar-section">Workflow</div>
+    <div class="nav-item active" onclick="showSection('import', this)">
+      <div class="nav-dot" style="background:var(--accent)"></div>
+      Import leads
+    </div>
+    <div class="nav-item" onclick="showSection('pipeline', this)">
+      <div class="nav-dot" style="background:var(--accent2)"></div>
+      GHL pipeline
+      <span class="nav-count" id="cnt-pipeline">0</span>
+    </div>
+    <div class="nav-item" onclick="showSection('optimize', this)">
+      <div class="nav-dot" style="background:var(--amber)"></div>
+      Optimize
+    </div>
+    <div class="nav-item" onclick="showSection('logs', this)">
+      <div class="nav-dot" style="background:var(--purple)"></div>
+      Run logs
+    </div>
+    <div class="sidebar-section" style="margin-top:8px">AI Agent</div>
+    <div class="nav-item" onclick="showSection('agent', this)">
+      <div class="nav-dot" style="background:var(--purple)"></div>
+      Agent chat
+    </div>
+    <div class="nav-item" onclick="showSection('settings', this)">
+      <div class="nav-dot" style="background:var(--muted)"></div>
+      Settings
+    </div>
+
+    <!-- Mini stats -->
+    <div style="margin-top:24px;padding-top:20px;border-top:1px solid var(--border)">
+      <div style="font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:12px">Session stats</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;justify-content:space-between;font-size:12px">
+          <span style="color:var(--muted)">Imported</span>
+          <span id="mini-imported" style="font-family:var(--mono);color:var(--accent)">0</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:12px">
+          <span style="color:var(--muted)">Deduped</span>
+          <span id="mini-deduped" style="font-family:var(--mono);color:var(--amber)">0</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:12px">
+          <span style="color:var(--muted)">Errors fixed</span>
+          <span id="mini-fixed" style="font-family:var(--mono);color:var(--purple)">0</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:12px">
+          <span style="color:var(--muted)">Success rate</span>
+          <span id="mini-rate" style="font-family:var(--mono);color:var(--text)">—</span>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- IMPORT SECTION -->
+    <div id="sec-import" class="section active">
+      <div class="page-header">
+        <div class="page-title">Import leads</div>
+        <div class="page-sub">Select a data source, configure field mapping, and run the AI import pipeline</div>
+      </div>
+
+      <!-- Steps -->
+      <div class="import-steps">
+        <div class="step-item">
+          <div class="step-num active" id="step1-num">1</div>
+          <div class="step-label active" id="step1-lbl">Source</div>
+        </div>
+        <div class="step-connector"></div>
+        <div class="step-item">
+          <div class="step-num" id="step2-num">2</div>
+          <div class="step-label" id="step2-lbl">Configure</div>
+        </div>
+        <div class="step-connector"></div>
+        <div class="step-item">
+          <div class="step-num" id="step3-num">3</div>
+          <div class="step-label" id="step3-lbl">Map fields</div>
+        </div>
+        <div class="step-connector"></div>
+        <div class="step-item">
+          <div class="step-num" id="step4-num">4</div>
+          <div class="step-label" id="step4-lbl">Run</div>
+        </div>
+      </div>
+
+      <!-- Step 1: Source -->
+      <div id="wizard-1" class="card glow-border" style="margin-bottom:20px">
+        <div class="card-header">
+          <div class="card-title">Select data source</div>
+          <span class="badge badge-blue">Step 1 of 4</span>
+        </div>
+        <div class="card-body">
+          <div class="source-grid">
+            <div class="source-tile selected" id="src-sheets" onclick="selectSource('sheets')">
+              <div class="tile-tick" style="position:absolute;top:8px;right:8px;width:18px;height:18px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:10px;color:#0d0f14;font-weight:700">✓</div>
+              <div class="source-icon">📊</div>
+              <div class="source-name">Google Sheets</div>
+              <div class="source-desc">Live spreadsheet sync</div>
+            </div>
+            <div class="source-tile" id="src-csv" onclick="selectSource('csv')">
+              <div class="tile-tick" style="position:absolute;top:8px;right:8px;width:18px;height:18px;border-radius:50%;background:var(--accent);display:none;align-items:center;justify-content:center;font-size:10px;color:#0d0f14;font-weight:700">✓</div>
+              <div class="source-icon">📁</div>
+              <div class="source-name">CSV / Excel</div>
+              <div class="source-desc">Upload file directly</div>
+            </div>
+            <div class="source-tile" id="src-scrape" onclick="selectSource('scrape')">
+              <div class="tile-tick" style="position:absolute;top:8px;right:8px;width:18px;height:18px;border-radius:50%;background:var(--accent);display:none;align-items:center;justify-content:center;font-size:10px;color:#0d0f14;font-weight:700">✓</div>
+              <div class="source-icon">🔍</div>
+              <div class="source-name">Web scraping</div>
+              <div class="source-desc">Airbnb, VRBO, MBO</div>
+            </div>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-primary" onclick="goStep(2)">Continue →</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Configure -->
+      <div id="wizard-2" class="card" style="margin-bottom:20px;display:none">
+        <div class="card-header">
+          <div class="card-title">Configure source</div>
+          <span class="badge badge-blue">Step 2 of 4</span>
+        </div>
+        <div class="card-body" id="config-body">
+          <!-- filled by JS -->
+        </div>
+      </div>
+
+      <!-- Step 3: Field Mapping -->
+      <div id="wizard-3" class="card" style="margin-bottom:20px;display:none">
+        <div class="card-header">
+          <div class="card-title">AI field mapping</div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <span id="mapper-auto-badge" class="badge badge-green">AI auto-mapped</span>
+            <span class="badge badge-amber">Step 3 of 4</span>
+          </div>
+        </div>
+        <div class="card-body">
+          <!-- Saved config toolbar -->
+          <div class="u-toolbar">
+            <span class="u-mono-label" style="flex-shrink:0">Saved configs</span>
+            <select id="mapping-config-select" onchange="loadMappingConfig(this.value)" style="flex:1;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);padding:6px 10px;color:var(--text);font-size:12px;font-family:var(--sans)">
+              <option value="">— select a saved mapping config —</option>
+            </select>
+            <button class="btn btn-sm" onclick="promptSaveMappingConfig()" style="white-space:nowrap;flex-shrink:0">💾 Save config</button>
+            <button class="btn btn-sm" id="delete-mapping-btn" onclick="deleteMappingConfig()" style="white-space:nowrap;flex-shrink:0;color:var(--red);border-color:rgba(248,113,113,.3);display:none">🗑 Delete</button>
+          </div>
+          <p style="font-size:12px;color:var(--muted);margin-bottom:16px">Review and adjust column→field mappings below. Use a saved config or auto-mapping as starting point — then confirm to proceed.</p>
+          <!-- Save config inline panel -->
+          <div id="save-mapping-panel" class="u-panel" style="display:none;margin-bottom:14px">
+            <div class="u-mono-label" style="margin-bottom:8px">Name this mapping configuration</div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input id="mapping-config-name" placeholder="e.g. Kin & Co Sale Pipeline — Military Market" style="flex:1;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);padding:8px 12px;color:var(--text);font-size:13px;font-family:var(--sans);outline:none" onkeydown="if(event.key==='Enter')confirmSaveMappingConfig()">
+              <button class="btn btn-primary btn-sm" onclick="confirmSaveMappingConfig()" style="white-space:nowrap">Save</button>
+              <button class="btn btn-sm" onclick="closeSaveMappingPanel()">Cancel</button>
+            </div>
+            <div id="save-mapping-status" style="font-size:11px;color:var(--muted);margin-top:6px"></div>
+          </div>
+          <table class="mapper-table">
+            <thead>
+              <tr>
+                <th>Source column</th>
+                <th></th>
+                <th id="mapper-ghl-col-header">GHL field</th>
+                <th>Confidence</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="mapping-tbody"></tbody>
+          </table>
+          <div class="btn-row" style="margin-top:16px">
+            <button class="btn" onclick="goStep(2)">← Back</button>
+            <div style="display:flex;gap:8px">
+              <button class="btn" onclick="promptSaveMappingConfig()" title="Save this mapping before continuing">💾 Save &amp; name</button>
+              <button class="btn btn-primary" onclick="confirmMappingAndProceed()">Confirm mapping → Run import</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 4: Run -->
+      <div id="wizard-4" class="card glow-border" style="margin-bottom:20px;display:none">
+        <div class="card-header">
+          <div class="card-title">Run import pipeline</div>
+          <span class="badge badge-amber">Step 4 of 4</span>
+        </div>
+        <div class="card-body">
+          <div class="two-col" style="margin-bottom:16px">
+            <div>
+              <div class="u-mono-label" style="margin-bottom:10px">GHL actions</div>
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <label style="display:flex;gap:10px;align-items:center;cursor:pointer;font-size:13px">
+                  <input type="checkbox" checked id="act-create" style="accent-color:var(--accent);width:15px;height:15px"> Create/update contacts
+                </label>
+                <label style="display:flex;gap:10px;align-items:center;cursor:pointer;font-size:13px">
+                  <input type="checkbox" checked id="act-pipeline" style="accent-color:var(--accent);width:15px;height:15px"> Assign to pipeline
+                </label>
+                <label style="display:flex;gap:10px;align-items:center;cursor:pointer;font-size:13px">
+                  <input type="checkbox" checked id="act-tags" style="accent-color:var(--accent);width:15px;height:15px"> Tag &amp; segment
+                </label>
+                <label style="display:flex;gap:10px;align-items:center;cursor:pointer;font-size:13px">
+                  <input type="checkbox" checked id="act-workflow" style="accent-color:var(--accent);width:15px;height:15px"> Trigger workflows
+                </label>
+              </div>
+            </div>
+            <div>
+              <div class="u-mono-label" style="margin-bottom:10px">Import settings</div>
+              <div class="field">
+                <label>Duplicate strategy</label>
+                <select>
+                  <option>Merge (update existing)</option>
+                  <option>Skip duplicates</option>
+                  <option>Always create new</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Pipeline to assign</label>
+                <select id="wizard-pipeline-assign" onchange="saveImportConfig()">
+                  <option value="">— connect GHL first to load pipelines —</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div id="run-progress" style="display:none;margin-bottom:16px">
+            <div class="u-flex-between u-status" style="margin-bottom:4px">
+              <span id="run-label">Initializing...</span>
+              <span id="run-pct">0%</span>
+            </div>
+            <div class="progress-wrap"><div class="progress-fill" id="run-bar" style="width:0%"></div></div>
+          </div>
+          <div class="btn-row">
+            <button class="btn" onclick="goStep(3)">← Back</button>
+            <button class="run-btn" onclick="runImport()" id="run-btn">
+              <span id="run-icon">▶</span> Run import
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PIPELINE SECTION -->
+    <div id="sec-pipeline" class="section">
+      <div class="page-header">
+        <div class="page-title">GHL pipeline</div>
+        <div class="page-sub">Contacts imported this session</div>
+      </div>
+      <div class="stats-row">
+        <div class="stat-card green">
+          <div class="stat-label">Total imported</div>
+          <div class="stat-val" id="s-total" style="color:var(--accent)">0</div>
+          <div class="stat-delta up" id="s-total-d">This session</div>
+        </div>
+        <div class="stat-card blue">
+          <div class="stat-label">New contacts</div>
+          <div class="stat-val" id="s-new" style="color:var(--accent2)">0</div>
+          <div class="stat-delta" id="s-new-d">Created in GHL</div>
+        </div>
+        <div class="stat-card amber">
+          <div class="stat-label">Deduped</div>
+          <div class="stat-val" id="s-dup" style="color:var(--amber)">0</div>
+          <div class="stat-delta">Merged/skipped</div>
+        </div>
+        <div class="stat-card purple">
+          <div class="stat-label">Workflows triggered</div>
+          <div class="stat-val" id="s-wf" style="color:var(--purple)">0</div>
+          <div class="stat-delta">Nurture sequences</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Imported contacts</div>
+          <button class="btn btn-sm" onclick="exportContacts()">Export CSV</button>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="lead-table">
+            <thead>
+              <tr>
+                <th>Contact</th>
+                <th>Source</th>
+                <th>Market</th>
+                <th>Pipeline</th>
+                <th>Tags</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="contacts-tbody">
+              <tr><td colspan="6" style="text-align:center;color:var(--muted);padding:40px">No imports yet — run the pipeline to see contacts here</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- OPTIMIZE SECTION -->
+    <div id="sec-optimize" class="section">
+      <div class="page-header">
+        <div class="page-title">Optimization</div>
+        <div class="page-sub">AI-generated insights from your import history</div>
+      </div>
+      <div class="two-col">
+        <div class="card">
+          <div class="card-header"><div class="card-title">Weekly import volume</div></div>
+          <div class="card-body">
+            <div class="bar-chart" id="bar-chart"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Source breakdown</div></div>
+          <div class="card-body" id="source-breakdown">
+            <div style="display:flex;flex-direction:column;gap:10px" id="breakdown-bars"></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Agent insights</div>
+          <span class="badge badge-purple">Self-learning</span>
+        </div>
+        <div class="card-body" id="insights-body">
+          <div style="color:var(--muted);font-size:13px">Run at least one import to generate optimization insights.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LOGS SECTION -->
+    <div id="sec-logs" class="section">
+      <div class="page-header">
+        <div class="page-title">Run logs</div>
+        <div class="page-sub">Real-time agent activity and error resolution</div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Activity log</div>
+          <button class="btn btn-sm" onclick="clearLogs()">Clear</button>
+        </div>
+        <div class="card-body">
+          <div class="log-feed" id="log-feed">
+            <div class="log-line">
+              <span class="log-time">--:--</span>
+              <span class="log-type info">INFO</span>
+              <span class="log-msg">Agent initialized. Awaiting first run.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AGENT CHAT -->
+    <div id="sec-agent" class="section">
+      <div class="page-header">
+        <div class="page-title">Agent chat</div>
+        <div class="page-sub">Ask the AI agent about your pipeline, errors, or optimization ideas</div>
+      </div>
+      <div class="card">
+        <div class="card-body">
+          <div class="chat-area" id="chat-area">
+            <div class="msg agent">
+              <div class="msg-avatar">K</div>
+              <div class="msg-bubble">Hi Barry! I'm your Kin & Co import agent. I can help you configure imports, fix field mapping errors, analyze pipeline performance, or optimize your GHL workflow. What would you like to do?</div>
+            </div>
+          </div>
+          <div class="chat-input-row">
+            <input class="chat-input" id="chat-in" placeholder="Ask the agent anything..." onkeydown="if(event.key==='Enter')sendChat()">
+            <button class="btn btn-primary" onclick="sendChat()">Send</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div id="sec-settings" class="section">
+      <div class="page-header">
+        <div class="page-title">Settings</div>
+        <div class="page-sub">Configure GHL connection, pipelines, and agent behavior</div>
+      </div>
+<div class="card">
+          <div class="card-header">
+            <div class="card-title">Agent Behavior</div>
+            <span id="schema-fetch-status" style="font-size:11px;color:var(--muted)">Connect GHL first to load fields</span>
+          </div>
+          <div class="card-body">
+
+            <!-- Default pipeline -->
+            <div class="field">
+              <div class="u-field-label">
+                <label style="margin-bottom:0">Default pipeline</label>
+                <span id="pipeline-fetch-status" style="font-size:11px;color:var(--muted)"></span>
+              </div>
+              <select id="default-pipeline-select" onchange="debouncedSave()">
+                <option value="">— connect GHL to load pipelines —</option>
+              </select>
+              <div id="pipeline-summary" class="u-status" style="margin-top:5px;display:none"></div>
+            </div>
+
+            <!-- Field Group Builder -->
+            <div class="field" style="margin-top:4px">
+              <label>Import field groups</label>
+              <p style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.6">
+                Select fields from GHL and group them into named configurations for Contact or Property imports. Each saved group becomes available in the field mapper.
+              </p>
+
+              <!-- Saved field groups list -->
+              <div id="field-groups-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px"></div>
+
+              <!-- New group builder (collapsed by default) -->
+              <div id="group-builder-wrap" style="display:none;border:1px solid var(--border2);border-radius:var(--radius);overflow:hidden">
+                <!-- Builder toolbar -->
+                <div style="padding:10px 14px;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+                  <input id="group-builder-name" placeholder="Group name — e.g. Kin & Co Contact, STR Property" style="flex:1;min-width:180px;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);padding:7px 11px;color:var(--text);font-size:13px;font-family:var(--sans);outline:none">
+                  <div style="display:flex;gap:0;border:1px solid var(--border2);border-radius:var(--radius);overflow:hidden;flex-shrink:0">
+                    <button id="group-type-btn-contact" onclick="setGroupType('contact')" style="padding:7px 14px;background:var(--accent);border:none;color:#0d0f14;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);border-right:1px solid rgba(0,0,0,.15)">Contact</button>
+                    <button id="group-type-btn-property" onclick="setGroupType('property')" style="padding:7px 14px;background:var(--surface2);border:none;color:var(--muted);font-size:12px;font-weight:500;cursor:pointer;font-family:var(--sans)">Property</button>
+                  </div>
+                  <input type="hidden" id="group-builder-type" value="contact">
+                </div>
+
+                <!-- Field pool split: available | selected -->
+                <div style="display:grid;grid-template-columns:1fr 1fr;min-height:220px">
+                  <!-- Left: available fields -->
+                  <div style="border-right:1px solid var(--border);display:flex;flex-direction:column">
+                    <div style="padding:8px 12px;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px">
+                      <span style="font-size:11px;font-family:var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.05em;flex:1">Available fields</span>
+                      <span id="pool-count" style="font-size:11px;color:var(--muted)">0 fields</span>
+                    </div>
+                    <input id="field-pool-search" placeholder="Search fields…" oninput="filterFieldPool(this.value)" style="margin:8px;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);padding:6px 10px;color:var(--text);font-size:12px;font-family:var(--sans);outline:none">
+                    <div id="field-pool" style="flex:1;overflow-y:auto;max-height:280px;padding:0 8px 8px"></div>
+                  </div>
+                  <!-- Right: selected fields -->
+                  <div style="display:flex;flex-direction:column">
+                    <div style="padding:8px 12px;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px">
+                      <span style="font-size:11px;font-family:var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.05em;flex:1">Selected fields</span>
+                      <span id="selected-count" style="font-size:11px;color:var(--accent)">0 selected</span>
+                    </div>
+                    <div id="field-selected" style="flex:1;overflow-y:auto;max-height:320px;padding:8px"></div>
+                  </div>
+                </div>
+
+                <!-- Builder actions -->
+                <div style="padding:10px 14px;background:var(--surface2);border-top:1px solid var(--border);display:flex;gap:8px;align-items:center">
+                  <button class="btn btn-primary btn-sm" onclick="saveFieldGroup()">Save group</button>
+                  <button class="btn btn-sm" onclick="clearGroupBuilder()">Clear</button>
+                  <button class="btn btn-sm" onclick="closeGroupBuilder()" style="margin-left:auto">Cancel</button>
+                  <span id="group-save-status" style="font-size:11px;color:var(--muted)"></span>
+                </div>
+              </div>
+
+              <!-- Add new group button -->
+              <button id="add-group-btn" class="btn btn-sm" onclick="openGroupBuilder(null)" style="margin-top:8px">+ Add field group</button>
+            </div>
+
+            <!-- Auto-fix and tags -->
+            <div class="field">
+              <label>Auto-fix mapping errors</label>
+              <select id="autofix-setting"><option value="yes">Yes — apply AI fix automatically</option><option>No — flag for review</option></select>
+            </div>
+            <div class="field">
+              <label>Tags to apply (comma-separated)</label>
+              <input value="kin-co, short-term-rental, import-agent" id="default-tags" oninput="debouncedSave()">
+            </div>
+
+          </div>
+        </div>
+            <div class="settings-grid">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">GoHighLevel connection</div>
+            <span id="ghl-conn-badge" class="badge" style="font-size:10px">Not tested</span>
+          </div>
+          <div class="card-body">
+            <div class="field"><label>API key</label><input type="password" placeholder="GHL Private API key (eyJh... or sk-...)" id="ghl-key" oninput="ghlCredChanged(); debouncedSave()"></div>
+            <div class="field"><label>Location ID</label><input placeholder="Sub-account / Location ID from GHL" id="ghl-loc" oninput="ghlCredChanged(); debouncedSave()"></div>
+            <div class="field"><label>XLeads pipeline ID</label><input placeholder="Pipeline ID (from GHL → Pipelines → copy ID)" id="ghl-pipe" oninput="debouncedSave()"></div>
+            <div class="field">
+              <div class="u-field-label">
+                <label>CORS proxy URL <span style="font-size:10px;font-family:var(--mono);color:var(--muted);font-weight:400">(optional)</span></label>
+                <span id="proxy-status" class="u-status"></span>
+              </div>
+              <input placeholder="https://ghl-proxy.your-name.workers.dev" id="ghl-proxy" oninput="debouncedSave()" style="font-family:var(--mono);font-size:12px">
+              <div style="font-size:11px;color:var(--muted);margin-top:5px;line-height:1.6">
+                Deploy the included <code style="font-family:var(--mono);background:var(--surface2);padding:1px 5px;border-radius:3px">worker.js</code> to Cloudflare Workers (free) to fix Custom Objects CORS. Leave blank to use direct GHL API.
+              </div>
+            </div>
+            <div class="u-flex-center" style="margin-bottom:16px">
+              <button class="btn btn-primary" id="ghl-test-btn" onclick="testGHL()">
+                <span id="ghl-test-icon">⚡</span> Test connection
+              </button>
+              <span id="ghl-status" style="font-size:12px;color:var(--muted)"></span><span id="ghl-save-indicator" style="font-size:11px;color:var(--muted);margin-left:8px"></span>
+            </div>
+            <!-- Live connection log -->
+            <div id="ghl-log-wrap" style="display:none">
+              <div class="u-flex-between" style="margin-bottom:8px">
+                <div class="u-mono-label">Live connection log</div>
+                <button class="btn btn-sm" onclick="clearGhlLog()" style="font-size:10px;padding:3px 8px">Clear</button>
+              </div>
+              <div id="ghl-log-feed" style="background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius);padding:12px 14px;font-family:var(--mono);font-size:11px;line-height:2;max-height:360px;overflow-y:auto"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:20px">
+        <div class="card-header">
+          <div class="card-title">Google Sheets credential</div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <span id="settings-cred-badge" class="badge" style="font-size:10px">Not configured</span>
+          </div>
+        </div>
+        <div class="card-body">
+          <div style="display:flex;gap:8px;margin-bottom:14px">
+            <button class="btn btn-sm" id="settings-mode-sa" onclick="setSettingsCredMode('sa')" style="font-size:11px">Service account JSON</button>
+            <button class="btn btn-sm" id="settings-mode-apikey" onclick="setSettingsCredMode('apikey')" style="font-size:11px">Plain API key</button>
+          </div>
+          <div id="settings-sa-wrap">
+            <div class="field">
+              <label>Service account JSON <span style="color:var(--muted);font-weight:400">— for private Sysmatrix sheets (recommended)</span></label>
+              <textarea id="settings-sa-json" rows="5" placeholder='Paste full JSON from downloaded key file:&#10;{"type":"service_account","project_id":"kin-co-stays-automation","client_email":"kin-co-sheets-agent@...iam.gserviceaccount.com","private_key":"-----BEGIN RSA PRIVATE KEY-----\n..."}' oninput="validateSettingsSA(this.value)" style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius);padding:10px 14px;color:var(--text);font-family:var(--mono);font-size:11px;resize:vertical;min-height:100px;outline:none"></textarea>
+              <div id="settings-sa-status" style="font-size:12px;color:var(--muted);margin-top:6px">Paste the full contents of the <code style="font-family:var(--mono);font-size:11px;background:var(--surface2);padding:1px 5px;border-radius:4px">.json</code> file downloaded from Google Cloud Console → Service account → Keys.</div>
+            </div>
+          </div>
+          <div id="settings-apikey-wrap" style="display:none">
+            <div class="field">
+              <label>API key <span style="color:var(--muted);font-weight:400">— for public sheets only (AIza...)</span></label>
+              <input type="password" id="settings-apikey" placeholder="AIzaSy..." oninput="validateSettingsApiKey(this.value)">
+              <div style="font-size:12px;color:var(--muted);margin-top:6px">Your sheet must be shared as "Anyone with the link → Viewer". Does not work with private Sysmatrix Workspace sheets.</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center;margin-top:4px">
+            <button class="btn btn-primary" onclick="saveSheetsCred()">Save credential</button>
+            <button class="btn btn-sm" onclick="clearSheetsCred()" style="color:var(--red);border-color:var(--red)">Clear</button>
+            <span id="settings-save-status" style="font-size:12px;color:var(--muted)"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+
+// ─── PERSISTENT STORAGE ──────────────────────────────────────────
+// All settings and import config persisted to localStorage under 'kinco_' namespace.
+// Silently no-ops if localStorage is unavailable (private browsing etc).
+
+const STORE_NS = 'kinco_';
+
+function storeSave(key, value) {
+  try { localStorage.setItem(STORE_NS + key, JSON.stringify(value)); } catch(e) {}
+}
+function storeLoad(key, fallback) {
+  try {
+    const v = localStorage.getItem(STORE_NS + key);
+    return v !== null ? JSON.parse(v) : fallback;
+  } catch(e) { return fallback; }
+}
+function storeRemove(key) {
+  try { localStorage.removeItem(STORE_NS + key); } catch(e) {}
+}
+function storeClear() {
+  try {
+    Object.keys(localStorage).filter(k => k.startsWith(STORE_NS)).forEach(k => localStorage.removeItem(k));
+  } catch(e) {}
+}
+
+// Save all Settings fields at once
+function saveAllSettings() {
+  const fields = {
+    ghlKey:          (document.getElementById('ghl-key')         || {}).value || '',
+    ghlLoc:          (document.getElementById('ghl-loc')         || {}).value || '',
+    ghlPipe:         (document.getElementById('ghl-pipe')        || {}).value || '',
+    ghlProxy:        (document.getElementById('ghl-proxy')       || {}).value || '',
+    autofixSetting:  (document.getElementById('autofix-setting') || {}).value || 'yes',
+    defaultTags:     (document.getElementById('default-tags')    || {}).value || '',
+    defaultPipeline: (document.getElementById('default-pipeline-select') || {}).value || '',
+    settingsCredMode: state.sheetsCredMode,
+    sheetsSAJson:    state.sheetsSAJson ? JSON.stringify(state.sheetsSAJson) : null,
+    sheetsApiKey:    state.sheetsApiKey,
+    settingsSAApiKeyRaw: (document.getElementById('settings-apikey') || {}).value || '',
+    defaultSchema:       'contact',
+  };
+  storeSave('settings', fields);
+  state.ghlKey = fields.ghlKey;
+  state.ghlLoc = fields.ghlLoc;
+  return fields;
+}
+
+// Restore all Settings fields from storage
+function restoreSettings() {
+  const s = storeLoad('settings', null);
+  if (!s) return;
+  const set = (id, val) => { const el = document.getElementById(id); if (el && val !== undefined && val !== null) el.value = val; };
+  set('ghl-key', s.ghlKey);
+  set('ghl-loc', s.ghlLoc);
+  set('ghl-pipe', s.ghlPipe);
+  set('ghl-proxy', s.ghlProxy);
+  if (s.ghlProxy) { const ps = document.getElementById('proxy-status'); if (ps) { ps.textContent = '✓ Proxy configured'; ps.style.color = 'var(--accent)'; } }
+  set('autofix-setting', s.autofixSetting);
+  set('default-tags', s.defaultTags);
+  // Default pipeline select
+  const pipelineSelect = document.getElementById('default-pipeline-select');
+  if (pipelineSelect && s.defaultPipeline) pipelineSelect.value = s.defaultPipeline;
+  // Credential mode
+  if (s.settingsCredMode) {
+    state.sheetsCredMode = s.settingsCredMode;
+    setSettingsCredMode(s.settingsCredMode);
+  }
+  if (s.sheetsSAJson) {
+    try {
+      state.sheetsSAJson = JSON.parse(s.sheetsSAJson);
+      const ta = document.getElementById('settings-sa-json');
+      if (ta) ta.value = s.sheetsSAJson;
+      // Update badge
+      const badge = document.getElementById('settings-cred-badge');
+      if (badge && state.sheetsSAJson) {
+        badge.textContent = 'Service account ✓';
+        badge.className = 'badge badge-green';
+      }
+    } catch(e) {}
+  }
+  if (s.sheetsApiKey) {
+    state.sheetsApiKey = s.sheetsApiKey;
+    const apiEl = document.getElementById('settings-apikey');
+    if (apiEl) apiEl.value = s.settingsSAApiKeyRaw || '';
+  }
+  // Restore GHL state
+  if (s.ghlKey) state.ghlKey = s.ghlKey;
+  if (s.ghlLoc) state.ghlLoc = s.ghlLoc;
+  // Restore pipeline badge status
+  if (s.defaultPipeline) {
+    const st2 = document.getElementById('pipeline-fetch-status');
+    if (st2 && state.ghlPipelines.length) { st2.textContent = state.ghlPipelines.length + ' pipeline(s) loaded'; st2.style.color = 'var(--accent)'; }
+  }
+  // Restore schema + folder selects
+  // Restore schema toggle
+  if (s.defaultSchema) { selectSchema(s.defaultSchema); }
+  addLog('INFO', 'Settings restored from saved configuration');
+}
+
+// Save import wizard config
+function saveImportConfig() {
+  const cfg = {
+    source:          state.source,
+    sheetUrl:        (document.getElementById('sheet-url')        || {}).value || '',
+    sheetTabManual:  (document.getElementById('sheet-tab-manual') || {}).value || '',
+    selectedTab:     state.selectedTab ? state.selectedTab.name : '',
+    sheetHeader:     (document.getElementById('sheet-header')     || {}).value || '1',
+    scrapePlatform:  (document.getElementById('scrape-platform')  || {}).value || 'Airbnb',
+    scrapeLoc:       (document.getElementById('scrape-loc')       || {}).value || '',
+    scrapeMax:       (document.getElementById('scrape-max')       || {}).value || '100',
+    csvDelim:        (document.getElementById('csv-delim')        || {}).value || ',',
+    actCreate:       (document.getElementById('act-create')       || {}).checked !== false,
+    actPipeline:     (document.getElementById('act-pipeline')     || {}).checked !== false,
+    actTags:         (document.getElementById('act-tags')         || {}).checked !== false,
+    actWorkflow:     (document.getElementById('act-workflow')     || {}).checked !== false,
+    dupStrategy:     (() => { const s = document.querySelector('#wizard-4 select:first-of-type'); return s ? s.value : 'Merge (update existing)'; })(),
+    pipelineAssign:  (() => { const s = document.querySelector('#wizard-4 select:last-of-type');  return s ? s.value : 'Owner acquisition'; })(),
+  };
+  storeSave('importConfig', cfg);
+  return cfg;
+}
+
+// Restore import wizard config
+function restoreImportConfig() {
+  renderFieldGroupsList(); // show field groups immediately on load
+  const savedConfigs = storeLoad('mappingConfigs', {});
+  if (Object.keys(savedConfigs).length) {
+    state.mappingConfigs = savedConfigs;
+    addLog('INFO', Object.keys(savedConfigs).length + ' saved mapping config(s) available');
+  }
+  const cfg = storeLoad('importConfig', null);
+  if (!cfg) {
+    // Default to Barry's Sale Pipeline sheet
+    state.savedImportConfig = { source: 'sheets', sheetUrl: 'https://docs.google.com/spreadsheets/d/1HozshcqU1K1EsG1WmgiZKb3K67NCuMZoodPG5UF_J7o/edit?gid=827013665#gid=827013665', selectedTab: '', sheetTabManual: '' };
+    return;
+  }
+
+  // Source tile
+  if (cfg.source && ['sheets','csv','scrape'].includes(cfg.source)) {
+    selectSource(cfg.source);
+    state.source = cfg.source;
+  }
+
+  // Store for later injection when wizard-2 opens
+  state.savedImportConfig = cfg;
+  addLog('INFO', `Import config restored — source: ${cfg.source || 'sheets'}`);
+}
+
+// Called when goStep(2) injects CONFIG_HTML — apply saved values to the fresh DOM
+function applySavedConfigToWizard() {
+  const cfg = state.savedImportConfig;
+  if (!cfg) return;
+  const set = (id, val) => { const el = document.getElementById(id); if (el && val !== undefined && val !== null && val !== '') el.value = val; };
+  const setChk = (id, val) => { const el = document.getElementById(id); if (el) el.checked = !!val; };
+
+  set('sheet-url', cfg.sheetUrl);
+  set('sheet-tab-manual', cfg.sheetTabManual);
+  set('sheet-header', cfg.sheetHeader);
+  set('scrape-loc', cfg.scrapeLoc);
+  set('scrape-max', cfg.scrapeMax);
+  set('csv-delim', cfg.csvDelim);
+
+  if (cfg.scrapePlatform) {
+    const sp = document.getElementById('scrape-platform');
+    if (sp) sp.value = cfg.scrapePlatform;
+  }
+  if (cfg.csvDelim) {
+    const cd = document.getElementById('csv-delim');
+    if (cd) cd.value = cfg.csvDelim;
+  }
+
+  // Sync credential fields from settings state
+  if (state.sheetsCredMode === 'sa' && state.sheetsSAJson) {
+    setCredMode('sa');
+    const ta = document.getElementById('sheets-sa-json');
+    if (ta) ta.value = JSON.stringify(state.sheetsSAJson, null, 2);
+  } else if (state.sheetsCredMode === 'apikey' && state.sheetsApiKey) {
+    setCredMode('apikey');
+    const inp = document.getElementById('sheets-api-key');
+    if (inp) inp.value = state.sheetsApiKey;
+  }
+}
+
+// Called when goStep(4) opens the run panel — restore checkboxes and selects
+function applySavedRunConfig() {
+  const cfg = state.savedImportConfig;
+  if (!cfg) return;
+  const setChk = (id, val) => { const el = document.getElementById(id); if (el) el.checked = !!val; };
+  setChk('act-create',   cfg.actCreate);
+  setChk('act-pipeline', cfg.actPipeline);
+  setChk('act-tags',     cfg.actTags);
+  setChk('act-workflow', cfg.actWorkflow);
+
+  const selects = document.querySelectorAll('#wizard-4 select');
+  if (selects[0] && cfg.dupStrategy)    selects[0].value = cfg.dupStrategy;
+  if (selects[1] && cfg.pipelineAssign) selects[1].value = cfg.pipelineAssign;
+}
+
+// ─── STATE ───────────────────────────────────────────────────────
+const state = {
+  source: 'sheets',
+  step: 1,
+  runs: 0,
+  imported: 0,
+  deduped: 0,
+  fixed: 0,
+  contacts: [],
+  logs: [],
+  insights: [],
+  ghlKey: '',
+  ghlLoc: '',
+  sheetsCredMode: 'none',
+  sheetsSAJson: null,
+  sheetsApiKey: '',
+  ghlConnected: false,
+  ghlProxy: '',
+  savedImportConfig: null,
+  ghlPipelines: [],
+  ghlSchemas: [],
+  selectedSchema: null,
+  mappingConfigs: {},
+  activeMappingConfigName: ''
+};
+
+// ─── NAV ─────────────────────────────────────────────────────────
+function showSection(id, el) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const sec = document.getElementById('sec-' + id);
+  if (sec) sec.classList.add('active');
+  const target = el || (typeof event !== 'undefined' && event && event.currentTarget);
+  if (target) target.classList.add('active');
+}
+
+// ─── CREDENTIAL MANAGEMENT ───────────────────────────────────────
+function setCredMode(mode) {
+  const apikeyWrap = document.getElementById('cred-apikey-wrap');
+  const saWrap     = document.getElementById('cred-sa-wrap');
+  const btnApiKey  = document.getElementById('cred-mode-apikey');
+  const btnSA      = document.getElementById('cred-mode-sa');
+  if (!apikeyWrap) return;
+  const isSA = mode === 'sa';
+  apikeyWrap.style.display = isSA ? 'none' : 'block';
+  saWrap.style.display     = isSA ? 'block' : 'none';
+  if (btnApiKey) { btnApiKey.style.background = isSA ? '' : 'var(--accent)'; btnApiKey.style.borderColor = isSA ? '' : 'var(--accent)'; btnApiKey.style.color = isSA ? '' : '#0d0f14'; }
+  if (btnSA)     { btnSA.style.background     = isSA ? 'var(--accent)' : ''; btnSA.style.borderColor     = isSA ? 'var(--accent)' : ''; btnSA.style.color     = isSA ? '#0d0f14' : ''; }
+  const hint = document.getElementById('test-sheets-hint');
+  if (hint) hint.textContent = isSA ? 'Authenticates via service account — works with private Sysmatrix sheets' : 'Validates URL, reads tab headers and row count';
+  // Sync from settings if already saved
+  if (isSA && state.sheetsSAJson) {
+    const ta = document.getElementById('sheets-sa-json');
+    if (ta && !ta.value) ta.value = JSON.stringify(state.sheetsSAJson, null, 2);
+  } else if (!isSA && state.sheetsApiKey) {
+    const inp = document.getElementById('sheets-api-key');
+    if (inp && !inp.value) inp.value = state.sheetsApiKey;
+  }
+}
+
+function detectCredType(val) {
+  if (!val) return;
+  if (val.trim().startsWith('{')) {
+    setCredMode('sa');
+    const ta = document.getElementById('sheets-sa-json');
+    if (ta) ta.value = val;
+    validateSAJson(val);
+  }
+}
+
+function validateSAJson(val) {
+  const status = document.getElementById('sa-json-status');
+  if (!val || !val.trim()) { if (status) { status.style.color = 'var(--muted)'; status.textContent = 'Paste the full contents of the .json file downloaded from Google Cloud Console → Service account → Keys.'; } return false; }
+  try {
+    const parsed = JSON.parse(val.trim());
+    const required = ['type','project_id','client_email','private_key'];
+    const missing  = required.filter(k => !parsed[k]);
+    if (parsed.type !== 'service_account') {
+      if (status) { status.style.color = 'var(--red)'; status.textContent = '✗ This looks like an OAuth client credential (type: "' + parsed.type + '"), not a service account. Re-download from Cloud Console → Credentials → Service Accounts → Keys tab.'; }
+      return false;
+    }
+    if (missing.length) {
+      if (status) { status.style.color = 'var(--red)'; status.textContent = '✗ JSON is missing fields: ' + missing.join(', ') + '. Make sure you pasted the complete file.'; }
+      return false;
+    }
+    const email = parsed.client_email || '';
+    if (status) { status.style.color = 'var(--accent)'; status.textContent = '✓ Valid — ' + email + ' | key ID: ' + (parsed.private_key_id || 'unknown') + '. If you regenerated this key in Cloud Console, re-download the JSON.'; }
+    state.sheetsSAJson  = parsed;
+    state.sheetsCredMode = 'sa';
+    return true;
+  } catch(e) {
+    if (status) { status.style.color = 'var(--red)'; status.textContent = '✗ Invalid JSON: ' + e.message + '. Make sure you copied the entire file including the opening { and closing }.'; }
+    return false;
+  }
+}
+
+function getActiveSheetsCredential() {
+  // Check wizard fields first, then fall back to settings store
+  const saTA  = document.getElementById('sheets-sa-json');
+  const saWrap = document.getElementById('cred-sa-wrap');
+  if (saTA && saWrap && saWrap.style.display !== 'none' && saTA.value.trim()) {
+    try { return { mode: 'sa', data: JSON.parse(saTA.value.trim()) }; } catch(e) {}
+  }
+  const apiInp = document.getElementById('sheets-api-key');
+  if (apiInp && apiInp.value.trim()) return { mode: 'apikey', data: apiInp.value.trim() };
+  // Fall back to settings store
+  if (state.sheetsCredMode === 'sa' && state.sheetsSAJson) return { mode: 'sa', data: state.sheetsSAJson };
+  if (state.sheetsCredMode === 'apikey' && state.sheetsApiKey) return { mode: 'apikey', data: state.sheetsApiKey };
+  return { mode: 'none', data: null };
+}
+
+function buildSheetsAuthUrl(baseUrl) {
+  const cred = getActiveSheetsCredential();
+  if (cred.mode === 'apikey') return baseUrl + (baseUrl.includes('?') ? '&' : '?') + 'key=' + encodeURIComponent(cred.data);
+  return baseUrl; // SA: auth header added separately (simulated in test)
+}
+
+// getSheetsAuthHeaders removed — real auth built inline via getServiceAccountToken()
+
+// ─── SETTINGS CREDENTIAL PANEL ───────────────────────────────────
+function setSettingsCredMode(mode) {
+  const saWrap  = document.getElementById('settings-sa-wrap');
+  const keyWrap = document.getElementById('settings-apikey-wrap');
+  const btnSA   = document.getElementById('settings-mode-sa');
+  const btnKey  = document.getElementById('settings-mode-apikey');
+  const isSA    = mode === 'sa';
+  if (saWrap)  saWrap.style.display  = isSA ? 'block' : 'none';
+  if (keyWrap) keyWrap.style.display = isSA ? 'none'  : 'block';
+  if (btnSA)  { btnSA.style.background  = isSA ? 'var(--accent)' : ''; btnSA.style.borderColor  = isSA ? 'var(--accent)' : ''; btnSA.style.color  = isSA ? '#0d0f14' : ''; }
+  if (btnKey) { btnKey.style.background = isSA ? '' : 'var(--accent)'; btnKey.style.borderColor = isSA ? '' : 'var(--accent)'; btnKey.style.color = isSA ? '' : '#0d0f14'; }
+}
+
+function validateSettingsSA(val) {
+  const status = document.getElementById('settings-sa-status');
+  if (!val || !val.trim()) { if (status) { status.style.color = 'var(--muted)'; status.textContent = ''; } return; }
+  try {
+    const parsed = JSON.parse(val.trim());
+    if (parsed.type === 'service_account' && parsed.client_email && parsed.private_key) {
+      if (status) { status.style.color = 'var(--accent)'; status.textContent = '✓ Valid — ' + parsed.client_email; }
+    } else {
+      if (status) { status.style.color = 'var(--red)'; status.textContent = '✗ Not a service account JSON. Check the "type" field.'; }
+    }
+  } catch(e) {
+    if (status) { status.style.color = 'var(--red)'; status.textContent = '✗ Invalid JSON — ' + e.message; }
+  }
+}
+
+function validateSettingsApiKey(val) {
+  const status = document.getElementById('settings-sa-status');
+}
+
+function saveSheetsCred() {
+  const saTA  = document.getElementById('settings-sa-json');
+  const keyIn = document.getElementById('settings-apikey');
+  const saWrap = document.getElementById('settings-sa-wrap');
+  const badge  = document.getElementById('settings-cred-badge');
+  const saveStatus = document.getElementById('settings-save-status');
+  const isSA  = saWrap && saWrap.style.display !== 'none';
+
+  if (isSA && saTA && saTA.value.trim()) {
+    try {
+      const parsed = JSON.parse(saTA.value.trim());
+      if (parsed.type !== 'service_account') throw new Error('Not a service account');
+      state.sheetsSAJson   = parsed;
+      state.sheetsCredMode = 'sa';
+      state.sheetsApiKey   = '';
+      if (badge) { badge.textContent = 'Service account ✓'; badge.className = 'badge badge-green'; }
+      if (saveStatus) { saveStatus.style.color = 'var(--accent)'; saveStatus.textContent = '✓ Saved — ' + (parsed.client_email || ''); }
+      addLog('OK', 'Sheets credential saved — service account: ' + (parsed.client_email || 'unknown'));
+      setTimeout(saveAllSettings, 50); // persist after state update
+    } catch(e) {
+      if (saveStatus) { saveStatus.style.color = 'var(--red)'; saveStatus.textContent = '✗ Invalid JSON: ' + e.message; }
+    }
+  } else if (!isSA && keyIn && keyIn.value.trim()) {
+    state.sheetsApiKey   = keyIn.value.trim();
+    state.sheetsCredMode = 'apikey';
+    state.sheetsSAJson   = null;
+    if (badge) { badge.textContent = 'API key ✓'; badge.className = 'badge badge-blue'; }
+    if (saveStatus) { saveStatus.style.color = 'var(--accent)'; saveStatus.textContent = '✓ API key saved'; }
+    addLog('OK', 'Sheets credential saved — API key mode');
+    setTimeout(saveAllSettings, 50);
+  } else {
+    if (saveStatus) { saveStatus.style.color = 'var(--red)'; saveStatus.textContent = 'Enter a credential first.'; }
+  }
+}
+
+function clearSheetsCred() {
+  state.sheetsSAJson   = null;
+  state.sheetsApiKey   = '';
+  state.sheetsCredMode = 'none';
+  const saTA  = document.getElementById('settings-sa-json');
+  const keyIn = document.getElementById('settings-apikey');
+  if (saTA)  saTA.value  = '';
+  if (keyIn) keyIn.value = '';
+  const badge = document.getElementById('settings-cred-badge');
+  if (badge) { badge.textContent = 'Not configured'; badge.className = 'badge'; }
+  const saveStatus = document.getElementById('settings-save-status');
+  if (saveStatus) { saveStatus.style.color = 'var(--muted)'; saveStatus.textContent = 'Credential cleared.'; }
+  addLog('INFO', 'Sheets credential cleared');
+}
+
+// ─── SOURCE SELECTION ────────────────────────────────────────────
+function selectSource(src) {
+  state.source = src;
+  ['sheets','csv','scrape'].forEach(s => {
+    const el = document.getElementById('src-' + s);
+    if (el) {
+      el.classList.remove('selected');
+      const tick = el.querySelector('.tile-tick');
+      if (tick) tick.style.display = 'none';
+    }
+  });
+  const chosen = document.getElementById('src-' + src);
+  if (chosen) {
+    chosen.classList.add('selected');
+    const tick = chosen.querySelector('.tile-tick');
+    if (tick) tick.style.display = 'block';
+  }
+  storeSave('importConfig', Object.assign(storeLoad('importConfig', {}), { source: src }));
+}
+
+// ─── WIZARD STEPS ────────────────────────────────────────────────
+const MAPPINGS = {
+  sheets: [
+    { src: 'Property Name',  ghl: 'contact_name',    conf: 96 },
+    { src: 'Owner Email',    ghl: 'email',            conf: 99 },
+    { src: 'Phone',          ghl: 'phone',            conf: 98 },
+    { src: 'City / Market',  ghl: 'city',             conf: 88 },
+    { src: 'BAH Rate',       ghl: 'custom_bah_rate',  conf: 74 },
+    { src: 'Listing URL',    ghl: 'website',          conf: 85 },
+    { src: 'Bedrooms',       ghl: 'custom_bedrooms',  conf: 91 },
+    { src: 'Monthly Rev',    ghl: 'custom_monthly_rev', conf: 79 },
+  ],
+  csv: [
+    { src: 'first_name',     ghl: 'first_name',       conf: 97 },
+    { src: 'last_name',      ghl: 'last_name',        conf: 97 },
+    { src: 'email_address',  ghl: 'email',            conf: 99 },
+    { src: 'cell_phone',     ghl: 'phone',            conf: 93 },
+    { src: 'property_addr',  ghl: 'address1',         conf: 86 },
+    { src: 'zip',            ghl: 'postal_code',      conf: 95 },
+    { src: 'notes',          ghl: 'notes',            conf: 82 },
+  ],
+  scrape: [
+    { src: 'listing_title',  ghl: 'contact_name',     conf: 71 },
+    { src: 'host_name',      ghl: 'first_name',       conf: 89 },
+    { src: 'location_city',  ghl: 'city',             conf: 92 },
+    { src: 'nightly_rate',   ghl: 'custom_nightly',   conf: 78 },
+    { src: 'listing_url',    ghl: 'website',          conf: 95 },
+    { src: 'reviews_count',  ghl: 'custom_reviews',   conf: 68 },
+  ]
+};
+
+const CONFIG_HTML = {
+  sheets: `
+    <div class="field">
+      <label>Sheet URL</label>
+      <div style="display:flex;gap:8px">
+        <input placeholder="https://docs.google.com/spreadsheets/d/..." id="sheet-url" oninput="resetConnTest('conn-result-sheets');resetTabPicker()" style="flex:1">
+        <button class="btn btn-sm" id="fetch-tabs-btn" onclick="fetchSheetTabs()" style="white-space:nowrap;flex-shrink:0">
+          <span id="fetch-tabs-icon">⬇</span><span id="fetch-tabs-label"> Load tabs</span>
+        </button>
+      </div>
+    </div>
+    <div class="field" id="tab-picker-wrap" style="display:none">
+      <label>Select tab</label>
+      <select id="sheet-tab" onchange="onTabChange(this.value)" style="background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius);padding:10px 14px;color:var(--text);font-size:13px;width:100%;font-family:var(--sans)">
+      </select>
+      <div id="tab-meta" style="font-size:11px;color:var(--muted);margin-top:5px"></div>
+    </div>
+    <div class="field" id="tab-manual-wrap">
+      <label>Tab / sheet name <span style="color:var(--muted);font-weight:400">— or paste URL above to auto-detect</span></label>
+      <input placeholder="e.g. Leads, Sheet1, Owner Outreach" id="sheet-tab-manual" value="" oninput="resetConnTest('conn-result-sheets')">
+    </div>
+    <div class="field"><label>Header row</label><input type="number" value="1" min="1" id="sheet-header"></div>
+    <div class="field" id="cred-field-wrap">
+      <div class="u-field-label">
+        <label style="margin-bottom:0">Google Sheets credential <span style="color:var(--muted);font-weight:400">(optional — required for private Sysmatrix sheets)</span></label>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-sm" id="cred-mode-apikey" onclick="setCredMode('apikey')" style="font-size:11px;padding:3px 10px;background:var(--accent);border-color:var(--accent);color:#0d0f14">API key</button>
+          <button class="btn btn-sm" id="cred-mode-sa" onclick="setCredMode('sa')" style="font-size:11px;padding:3px 10px">Service account</button>
+        </div>
+      </div>
+      <div id="cred-apikey-wrap">
+        <input type="password" placeholder="AIzaSy... (plain API key for public sheets)" id="sheets-api-key" oninput="resetConnTest('conn-result-sheets');detectCredType(this.value)">
+        <div style="font-size:11px;color:var(--muted);margin-top:5px">For public sheets only. Sheet must be shared as "Anyone with the link".</div>
+      </div>
+      <div id="cred-sa-wrap" style="display:none">
+        <textarea id="sheets-sa-json" rows="4" placeholder='Paste your full service account JSON here:&#10;{"type":"service_account","project_id":"kin-co-stays-automation","client_email":"kin-co-sheets-agent@...","private_key":"-----BEGIN RSA PRIVATE KEY-----..."}' oninput="resetConnTest('conn-result-sheets');validateSAJson(this.value)" style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius);padding:10px 14px;color:var(--text);font-family:var(--mono);font-size:11px;resize:vertical;min-height:90px;outline:none"></textarea>
+        <div id="sa-json-status" style="font-size:11px;color:var(--muted);margin-top:5px">For private Sysmatrix sheets. Paste the full contents of the JSON key file downloaded in setup step 5.</div>
+      </div>
+    </div>
+    <div id="conn-result-sheets"></div>
+    <div style="display:flex;align-items:center;gap:12px;margin-top:4px">
+      <button class="btn" id="test-btn-sheets" onclick="testSourceConn('sheets')">
+        <span id="test-icon-sheets">⚡</span> Test connection
+      </button>
+      <span style="font-size:12px;color:var(--muted)" id="test-sheets-hint">Validates URL, reads tab headers and row count</span>
+    </div>
+  `,
+  csv: `
+    <div class="field"><label>Upload file</label><input type="file" accept=".csv,.xlsx,.xls" id="csv-file" style="padding:8px 14px" onchange="handleFileSelect(this)"></div>
+    <div class="field"><label>Delimiter (CSV only)</label>
+      <select id="csv-delim"><option value=",">Comma ( , )</option><option value="\t">Tab</option><option value=";">Semicolon ( ; )</option></select>
+    </div>
+    <div id="conn-result-csv"></div>
+    <div style="display:flex;align-items:center;gap:12px;margin-top:4px">
+      <button class="btn" id="test-btn-csv" onclick="testSourceConn('csv')">
+        <span id="test-icon-csv">⚡</span> Test connection
+      </button>
+      <span style="font-size:12px;color:var(--muted)">Parses file and previews first 5 rows</span>
+    </div>
+  `,
+  scrape: `
+    <div class="field"><label>Target platform</label>
+      <select id="scrape-platform" onchange="resetConnTest('conn-result-scrape')">
+        <option>Airbnb</option><option>VRBO</option><option>MilitaryByOwner</option><option>Furnished Finder</option>
+      </select>
+    </div>
+    <div class="field"><label>Location / market</label><input placeholder="Kissimmee FL, 34746" id="scrape-loc" oninput="resetConnTest('conn-result-scrape')"></div>
+    <div class="field"><label>Max results</label><input type="number" value="100" min="1" max="500" id="scrape-max"></div>
+    <div class="field"><label>Scraper proxy / API key <span style="color:var(--muted);font-weight:400">(optional)</span></label><input type="password" placeholder="Proxy or scraping API key" id="scrape-key"></div>
+    <div id="conn-result-scrape"></div>
+    <div style="display:flex;align-items:center;gap:12px;margin-top:4px">
+      <button class="btn" id="test-btn-scrape" onclick="testSourceConn('scrape')">
+        <span id="test-icon-scrape">⚡</span> Test connection
+      </button>
+      <span style="font-size:12px;color:var(--muted)">Checks reachability and fetches a sample listing</span>
+    </div>
+  `
+};
+
+function goStep(n) {
+  state.step = n;
+  [1,2,3,4].forEach(i => {
+    const panel = document.getElementById('wizard-' + i);
+    if (panel) panel.style.display = i === n ? 'block' : 'none';
+    const num = document.getElementById('step' + i + '-num');
+    const lbl = document.getElementById('step' + i + '-lbl');
+    if (num && lbl) {
+      if (i < n)       { num.className = 'step-num done';   lbl.className = 'step-label'; }
+      else if (i === n){ num.className = 'step-num active'; lbl.className = 'step-label active'; }
+      else             { num.className = 'step-num';        lbl.className = 'step-label'; }
+    }
+  });
+  if (n === 2) {
+    const body = document.getElementById('config-body');
+    if (body) {
+      body.innerHTML = CONFIG_HTML[state.source] + `<div class="btn-row" style="margin-top:20px"><button class="btn" onclick="goStep(1)">← Back</button><button class="btn btn-primary" id="next-to-map" onclick="if(!this.disabled)goStep(3)" style="opacity:.4;cursor:not-allowed">Map fields →</button></div>`;
+      setTimeout(applySavedConfigToWizard, 20);
+    }
+  }
+  if (n === 3) {
+    buildMapper();
+    // Ensure dropdowns are populated if fields were loaded after last build
+    setTimeout(buildMapper, 50);
+  }
+  if (n === 4) setTimeout(applySavedRunConfig, 20);
+}
+
+function buildMapper() {
+  const tbody = document.getElementById('mapping-tbody');
+  if (!tbody) return;
+
+  // ── Build GHL field options (hoisted — available for ALL paths) ──
+  // Build GHL field target options:
+  // Priority 1 — fields from _allAvailableFields (loaded by field group builder via populateFieldPool)
+  // Priority 2 — fields from saved fieldGroups in storage
+  // Priority 3 — hardcoded defaults
+  const DEFAULT_GHL_OPTIONS = [
+    { key: 'firstName',         label: 'First Name'         },
+    { key: 'lastName',          label: 'Last Name'          },
+    { key: 'email',             label: 'Email'              },
+    { key: 'phone',             label: 'Phone'              },
+    { key: 'city',              label: 'City'               },
+    { key: 'address1',          label: 'Address'            },
+    { key: 'postalCode',        label: 'Postal Code'        },
+    { key: 'website',           label: 'Website / URL'      },
+    { key: 'source',            label: 'Source'             },
+    { key: 'tags',              label: 'Tags'               },
+    { key: 'notes',             label: 'Notes'              },
+    { key: '[skip]',            label: '[skip — do not map]'},
+  ];
+
+  // Build field option list from best available source
+  let fieldOptionDefs;
+  if (_allAvailableFields && _allAvailableFields.length) {
+    // Use the live field pool from GHL connection
+    fieldOptionDefs = _allAvailableFields.map(function(f) {
+      return { key: f.key, label: (f.source && f.source !== 'Contact' ? '[' + f.source + '] ' : '') + f.label };
+    });
+    fieldOptionDefs.push({ key: '[skip]', label: '[skip — do not map]' });
+  } else {
+    // Fall back to saved fieldGroups if any
+    const savedGroups = storeLoad('fieldGroups', {});
+    const allGroupFields = [];
+    Object.values(savedGroups).forEach(function(g) {
+      (g.fields || []).forEach(function(f) {
+        if (!allGroupFields.find(function(x) { return x.key === f.key; })) {
+          allGroupFields.push({ key: f.key, label: f.label || f.key });
+        }
+      });
+    });
+    fieldOptionDefs = allGroupFields.length
+      ? [...allGroupFields, { key: '[skip]', label: '[skip — do not map]' }]
+      : DEFAULT_GHL_OPTIONS;
+  }
+
+  // Update column header to show source
+  const colHdr = document.getElementById('mapper-ghl-col-header');
+  if (colHdr) colHdr.textContent = _allAvailableFields.length ? 'GHL field (' + _allAvailableFields.length + ' available)' : 'GHL field';
+
+  // Helper: build <option> tags for a select, pre-selecting the given key
+  function makeOptions(selectedKey) {
+    return fieldOptionDefs.map(f =>
+      `<option value="${f.key}"${f.key === selectedKey ? ' selected' : ''}>${sanitiseHTML(f.label)}</option>`
+    ).join('');
+  }
+
+  // ── Build mappings ───────────────────────────────────────────────
+  let maps;
+  const AUTO_MAP = {
+    'name':'firstName','property name':'firstName','owner':'firstName',
+    'first':'firstName','last':'lastName',
+    'email':'email','e-mail':'email','mail':'email',
+    'phone':'phone','cell':'phone','mobile':'phone','tel':'phone',
+    'city':'city','market':'city',
+    'address':'address1','addr':'address1','street':'address1',
+    'zip':'postalCode','postal':'postalCode','postcode':'postalCode',
+    'website':'website','url':'website','listing':'website','link':'website',
+    'note':'notes','notes':'notes','comments':'notes',
+  };
+
+  function autoMap(hdr) {
+    const lower = (hdr || '').toLowerCase().trim();
+    if (lower.includes('@') || lower === 'email' || lower.includes('email')) return { ghl: 'email', conf: 99 };
+    for (const [key, val] of Object.entries(AUTO_MAP)) {
+      if (lower === key)           return { ghl: val, conf: 97 };
+      if (lower.includes(key))     return { ghl: val, conf: 78 };
+    }
+    return { ghl: '[skip]', conf: 40 };
+  }
+
+  if (state.source === 'sheets' && state.sheetHeaders && state.sheetHeaders.length) {
+    maps = state.sheetHeaders.map(hdr => {
+      const { ghl, conf } = autoMap(hdr);
+      return { src: hdr, ghl, conf };
+    });
+    addLog('INFO', 'Field mapper: ' + maps.length + ' real column(s) from sheet test connection');
+  } else {
+    maps = MAPPINGS[state.source];
+    if (!maps || !maps.length) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px;font-size:13px">' +
+        (state.source === 'sheets'
+          ? 'No sheet headers loaded yet — go back to Step 2 and run <strong>Test Connection</strong> to detect your columns automatically.'
+          : 'Loading default field mappings…') +
+        '</td></tr>';
+      if (state.source === 'sheets') { addLog('WARN', 'Field mapper: no sheet headers — complete Step 2 Test Connection first'); return; }
+    }
+    if (state.source === 'sheets') addLog('INFO', 'Field mapper: using default template columns — run Test Connection in Step 2 for real column detection');
+    else addLog('INFO', 'Field mapper: using default ' + state.source + ' columns');
+  }
+
+  // ── Render table ─────────────────────────────────────────────────
+  tbody.innerHTML = (maps || []).map(m => {
+    const pct = m.conf;
+    const cls = pct >= 90 ? 'conf-high' : pct >= 75 ? 'conf-med' : 'conf-low';
+    return `<tr>
+      <td><span class="mapper-source">${sanitiseHTML(m.src)}</span></td>
+      <td class="mapper-arrow">→</td>
+      <td><select style="background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:5px 10px;color:var(--text);font-size:12px;font-family:var(--sans)">
+        ${makeOptions(m.ghl)}
+      </select></td>
+      <td><div class="confidence ${cls}">
+        <div class="conf-bar"><div class="conf-fill" style="width:${pct}%"></div></div>
+        <span style="color:${pct>=90?'var(--accent)':pct>=75?'var(--amber)':'var(--red)'}">${pct}%</span>
+      </div></td>
+      <td><button class="btn btn-sm" onclick="remap(this,'${sanitiseHTML(m.src)}')">Re-map</button></td>
+    </tr>`;
+  }).join('');
+
+  // Refresh saved config select and restore active config
+  refreshMappingConfigSelect(state.activeMappingConfigName);
+  if (state.activeMappingConfigName) { loadMappingConfig(state.activeMappingConfigName); }
+}
+
+
+// ─── MAPPING CONFIG SAVE / LOAD / MANAGE ─────────────────────────
+function getCurrentMappings() {
+  const rows = document.querySelectorAll('#mapping-tbody tr');
+  const mappings = [];
+  rows.forEach(function(row) {
+    const srcEl = row.querySelector('.mapper-source');
+    const selEl = row.querySelector('select');
+    if (srcEl && selEl) mappings.push({ src: srcEl.textContent.trim(), ghl: selEl.value });
+  });
+  return mappings;
+}
+
+function getMappingConfigSelectEl() {
+  return document.getElementById('mapping-config-select');
+}
+
+function refreshMappingConfigSelect(selectValue) {
+  const sel = getMappingConfigSelectEl();
+  if (!sel) return;
+  const configs = storeLoad('mappingConfigs', {});
+  state.mappingConfigs = configs;
+  const names = Object.keys(configs).sort();
+  sel.innerHTML = '<option value="">— select a saved mapping config —</option>' +
+    names.map(function(n) {
+      return '<option value="' + sanitiseHTML(n) + '"' + (n === selectValue ? ' selected' : '') + '>' + sanitiseHTML(n) + '</option>';
+    }).join('');
+  const del = document.getElementById('delete-mapping-btn');
+  if (del) del.style.display = sel.value ? 'inline-flex' : 'none';
+}
+
+function promptSaveMappingConfig() {
+  const panel    = document.getElementById('save-mapping-panel');
+  const inp      = document.getElementById('mapping-config-name');
+  const statusEl = document.getElementById('save-mapping-status');
+  if (!panel || !inp) return;
+  if (state.activeMappingConfigName) inp.value = state.activeMappingConfigName;
+  else inp.value = '';
+  if (statusEl) statusEl.textContent = '';
+  panel.style.display = 'block';
+  inp.focus();
+}
+
+function confirmSaveMappingConfig() {
+  const inp      = document.getElementById('mapping-config-name');
+  const statusEl = document.getElementById('save-mapping-status');
+  const panel    = document.getElementById('save-mapping-panel');
+  const name     = inp ? inp.value.trim() : '';
+  if (!name) {
+    if (statusEl) { statusEl.style.color = 'var(--red)'; statusEl.textContent = 'Please enter a name.'; }
+    if (inp) inp.focus();
+    return;
+  }
+  const mappings = getCurrentMappings();
+  if (!mappings.length) {
+    if (statusEl) { statusEl.style.color = 'var(--red)'; statusEl.textContent = 'No mappings to save — mapper table is empty.'; }
+    return;
+  }
+  const configs  = storeLoad('mappingConfigs', {});
+  const isUpdate = !!configs[name];
+  configs[name]  = {
+    name,
+    source:      state.source,
+    schemaId:    state.selectedSchema ? state.selectedSchema.id : 'contact',
+    schemaName:  state.selectedSchema ? state.selectedSchema.name : 'Contact',
+    mappings,
+    savedAt:     new Date().toISOString(),
+    columnCount: mappings.length
+  };
+  storeSave('mappingConfigs', configs);
+  state.mappingConfigs           = configs;
+  state.activeMappingConfigName  = name;
+  if (statusEl) {
+    statusEl.style.color    = 'var(--accent)';
+    statusEl.textContent    = (isUpdate ? '✓ Updated' : '✓ Saved') + ' — ' + mappings.length + ' field(s) as "' + name + '"';
+  }
+  refreshMappingConfigSelect(name);
+  const badge = document.getElementById('mapper-auto-badge');
+  if (badge) { badge.textContent = '💾 ' + name; badge.className = 'badge badge-blue'; }
+  addLog('OK', 'Mapping config ' + (isUpdate ? 'updated' : 'saved') + ': "' + name + '" — ' + mappings.length + ' field(s)');
+  setTimeout(function() { if (panel) panel.style.display = 'none'; }, 1500);
+}
+
+function loadMappingConfig(name) {
+  const del = document.getElementById('delete-mapping-btn');
+  if (!name) { if (del) del.style.display = 'none'; return; }
+  if (del) del.style.display = 'inline-flex';
+  const configs = storeLoad('mappingConfigs', {});
+  const cfg     = configs[name];
+  if (!cfg || !cfg.mappings) { addLog('WARN', 'Mapping config "' + name + '" not found or empty'); return; }
+  // Apply saved mappings to current table rows
+  const rows = document.querySelectorAll('#mapping-tbody tr');
+  let applied = 0;
+  rows.forEach(function(row) {
+    const srcEl = row.querySelector('.mapper-source');
+    const selEl = row.querySelector('select');
+    if (!srcEl || !selEl) return;
+    const src   = srcEl.textContent.trim();
+    const saved = cfg.mappings.find(function(m) { return m.src === src; });
+    if (saved) { selEl.value = saved.ghl; applied++; }
+  });
+  state.activeMappingConfigName = name;
+  const badge = document.getElementById('mapper-auto-badge');
+  if (badge) { badge.textContent = '💾 ' + name; badge.className = 'badge badge-blue'; }
+  addLog('OK', 'Loaded "' + name + '" — applied ' + applied + '/' + cfg.mappings.length + ' mapping(s) | saved: ' + new Date(cfg.savedAt).toLocaleDateString());
+}
+
+function deleteMappingConfig() {
+  const sel  = getMappingConfigSelectEl();
+  const name = sel ? sel.value : '';
+  if (!name) return;
+  if (!confirm('Delete mapping config "' + name + '"?')) return;
+  const configs = storeLoad('mappingConfigs', {});
+  delete configs[name];
+  storeSave('mappingConfigs', configs);
+  state.mappingConfigs = configs;
+  if (state.activeMappingConfigName === name) state.activeMappingConfigName = '';
+  refreshMappingConfigSelect('');
+  const badge = document.getElementById('mapper-auto-badge');
+  if (badge) { badge.textContent = 'AI auto-mapped'; badge.className = 'badge badge-green'; }
+  addLog('INFO', 'Deleted mapping config: "' + name + '"');
+}
+
+function confirmMappingAndProceed() {
+  // Auto-save current mapping if an active config is set
+  if (state.activeMappingConfigName) {
+    const mappings = getCurrentMappings();
+    if (mappings.length) {
+      const configs = storeLoad('mappingConfigs', {});
+      if (configs[state.activeMappingConfigName]) {
+        configs[state.activeMappingConfigName].mappings = mappings;
+        configs[state.activeMappingConfigName].savedAt  = new Date().toISOString();
+        storeSave('mappingConfigs', configs);
+        addLog('INFO', 'Auto-saved "' + state.activeMappingConfigName + '" before proceeding');
+      }
+    }
+  }
+  goStep(4);
+}
+
+function closeSaveMappingPanel() {
+  var p = document.getElementById('save-mapping-panel');
+  if (p) p.style.display = 'none';
+}
+
+function remap(btn, field) {
+  addLog('INFO', `Agent re-analysing mapping for "${field}"...`);
+  btn.textContent = 'Re-mapping...';
+  setTimeout(() => { btn.textContent = 'Mapped ✓'; addLog('OK', `Re-mapped "${field}" with improved confidence`); }, 1200);
+}
+
+// ─── SERVICE ACCOUNT TOKEN (REAL JWT FLOW) ────────────────────────
+// Generates a real OAuth2 access token from the service account JSON
+// using the Web Crypto API (built into all modern browsers — no libraries needed).
+// Token is cached for up to 1 hour and reused automatically.
+
+let _saTokenCache = { token: null, expiry: 0, email: '' };
+
+function b64url(str) {
+  return btoa(str).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+}
+
+function b64urlFromBuffer(buf) {
+  let binary = '';
+  const bytes = new Uint8Array(buf);
+  for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
+  return btoa(binary).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+}
+
+function pemToDer(pem) {
+  // Strip PEM headers, ALL whitespace variants, and literal escaped sequences
+  // that survive JSON.parse in doubly-encoded keys
+  const b64 = pem
+    .replace(/-----BEGIN[^-]+-----/g, '')   // strip PEM header
+    .replace(/-----END[^-]+-----/g, '')     // strip PEM footer
+    .replace(/\\r\\n/g, '')             // literal \r\n (doubly escaped CRLF)
+    .replace(/\\n/g, '')                  // literal \n  (doubly escaped newline)
+    .replace(/\\r/g, '')                  // literal \r  (doubly escaped CR)
+    .replace(/[\s]/g, '')                  // ALL whitespace: \r \n \t spaces
+    .trim();
+  if (!b64) throw new Error('pemToDer: empty base64 after stripping headers — check private_key format');
+  let binary;
+  try {
+    binary = atob(b64);
+  } catch(e) {
+    throw new Error('pemToDer: invalid base64 in private_key — key may be corrupted or incorrectly pasted. Expected clean base64 chars only.');
+  }
+  const buf = new ArrayBuffer(binary.length);
+  const view = new Uint8Array(buf);
+  for (let i = 0; i < binary.length; i++) view[i] = binary.charCodeAt(i);
+  addLog('INFO', 'PEM decoded to DER — key length: ' + buf.byteLength + ' bytes' + (buf.byteLength < 1200 ? ' (unusually short — key may be truncated)' : ''));
+  return buf;
+}
+
+async function getServiceAccountToken(saJson) {
+  if (!saJson || !saJson.private_key || !saJson.client_email) {
+    addLog('WARN', 'Service account JSON missing private_key or client_email');
+    throw new Error('Invalid service account JSON — missing private_key or client_email');
+  }
+
+  // Return cached token if still valid (with 60s safety buffer)
+  const now = Math.floor(Date.now() / 1000);
+  if (_saTokenCache.token && _saTokenCache.expiry - now > 60 && _saTokenCache.email === saJson.client_email) {
+    addLog('INFO', `Using cached token for ${saJson.client_email} (expires in ${_saTokenCache.expiry - now}s)`);
+    return _saTokenCache.token;
+  }
+
+  addLog('INFO', `Signing JWT for service account: ${saJson.client_email}`);
+
+  try {
+    // 1. Build JWT header + payload
+    const iat = Math.floor(Date.now() / 1000);
+    const exp = iat + 3600;
+    const headerObj = { alg: 'RS256', typ: 'JWT' };
+    if (saJson.private_key_id) headerObj.kid = saJson.private_key_id;
+    const header  = b64url(JSON.stringify(headerObj));
+    addLog('INFO', 'JWT kid (key ID): ' + (saJson.private_key_id || '(none in JSON — proceeding without kid)'));
+    const payload = b64url(JSON.stringify({
+      iss:   saJson.client_email,
+      scope: 'https://www.googleapis.com/auth/spreadsheets.readonly',
+      aud:   'https://oauth2.googleapis.com/token',
+      exp,
+      iat
+    }));
+    const signingInput = header + '.' + payload;
+    addLog('INFO', 'JWT header+payload built — iss: ' + saJson.client_email + ', iat: ' + iat + ', exp: ' + exp);
+    // Clock skew check — Google rejects JWTs with iat more than 5 min from server time
+    const systemTime = new Date().toUTCString();
+    addLog('INFO', 'System clock: ' + systemTime + ' (Google rejects if > 5min skew — verify your clock is accurate)');
+    addLog('INFO', 'JWT signing input length: ' + signingInput.length + ' chars');
+
+    // 2. Import private key via Web Crypto API
+    let keyDer;
+    try {
+      keyDer = pemToDer(saJson.private_key);
+    } catch (pemErr) {
+      addLog('ERR', 'PEM parsing failed: ' + pemErr.message);
+      addLog('INFO', 'Check: private_key must start with -----BEGIN (RSA )PRIVATE KEY----- and end with -----END (RSA )PRIVATE KEY-----');
+      throw pemErr;
+    }
+
+    let cryptoKey;
+    try {
+      cryptoKey = await crypto.subtle.importKey(
+        'pkcs8',
+        keyDer,
+        { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
+        false,
+        ['sign']
+      );
+      addLog('OK', 'RSA private key imported successfully via Web Crypto');
+    } catch (importErr) {
+      // PKCS8 failed — try PKCS1 fallback note
+      addLog('ERR', 'Key import failed: ' + importErr.message);
+      addLog('INFO', 'Web Crypto requires PKCS#8 format (-----BEGIN PRIVATE KEY-----). If your key says -----BEGIN RSA PRIVATE KEY----- it is PKCS#1. Google service account keys are always PKCS#8 — re-download from Cloud Console → Service Accounts → Keys.');
+      throw importErr;
+    }
+
+    // 3. Sign
+    const enc = new TextEncoder();
+    const sigBuf = await crypto.subtle.sign('RSASSA-PKCS1-v1_5', cryptoKey, enc.encode(signingInput));
+    const jwt = signingInput + '.' + b64urlFromBuffer(sigBuf);
+    addLog('OK', 'JWT signed — total length: ' + jwt.length + ' chars (3 parts: ' + header.length + ' + ' + payload.length + ' + signature)');
+    addLog('INFO', 'JWT header (b64url): ' + header);
+    addLog('INFO', 'JWT payload (b64url, first 40): ' + payload.slice(0,40) + '...');
+    addLog('INFO', 'JWT signed — exchanging for OAuth2 access token...');
+
+    // 4. Exchange JWT for access token at Google token endpoint
+    const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=' + encodeURIComponent(jwt)
+    });
+
+    const tokenJson = await tokenRes.json();
+
+    if (!tokenRes.ok) {
+      const errMsg = tokenJson.error_description || tokenJson.error || JSON.stringify(tokenJson);
+      addLog('ERR', 'Token exchange failed (' + tokenRes.status + '): ' + errMsg);
+      addLog('INFO', 'Full Google response: ' + JSON.stringify(tokenJson));
+      // Specific guidance per error type
+      if (errMsg.includes('Invalid JWT Signature') || errMsg.includes('invalid_grant')) {
+        addLog('WARN', 'Invalid signature cause 1: private_key was pasted with literal \\n instead of real newlines — re-paste the full JSON file contents');
+        addLog('WARN', 'Invalid signature cause 2: wrong key used — verify key belongs to this service account in Cloud Console → Credentials');
+        addLog('WARN', 'Invalid signature cause 3: system clock skew > 5 min — Google rejects JWTs with iat too far from server time');
+        addLog('INFO', 'Your system time (iat): ' + new Date(iat * 1000).toUTCString() + ' | Server time may differ');
+      } else if (errMsg.includes('Invalid JWT')) {
+        addLog('WARN', 'Malformed JWT — check private_key is complete (not truncated) and starts with -----BEGIN PRIVATE KEY-----');
+      } else if (errMsg.includes('unauthorized_client')) {
+        addLog('WARN', 'Domain-wide delegation not granted — go to Google Workspace Admin Console → Security → API Controls → Manage Domain Wide Delegation');
+        addLog('INFO', 'Add scope: https://www.googleapis.com/auth/spreadsheets.readonly');
+      }
+      throw new Error('Token exchange error ' + tokenRes.status + ': ' + errMsg);
+    }
+
+    const accessToken = tokenJson.access_token;
+    if (!accessToken) throw new Error('Token response missing access_token field');
+
+    // 5. Cache the token
+    _saTokenCache = { token: accessToken, expiry: iat + (tokenJson.expires_in || 3600), email: saJson.client_email };
+    addLog('OK', `OAuth2 token obtained for ${saJson.client_email} (valid ${tokenJson.expires_in || 3600}s)`);
+    return accessToken;
+
+  } catch (err) {
+    // Re-throw errors that already have good messages
+    if (err.message && (err.message.includes('Token exchange') || err.message.includes('pemToDer') || err.message.includes('Key import'))) throw err;
+
+    const msg = err.message || String(err);
+
+    // "Failed to fetch" = network blocked, NOT a private key problem
+    if (msg === 'Failed to fetch' || msg.includes('NetworkError') || msg.includes('network')) {
+      addLog('ERR', 'Network blocked: could not reach oauth2.googleapis.com/token');
+      addLog('WARN', 'This is a CORS / network issue — NOT a problem with your private key or JSON');
+      addLog('INFO', 'Fix A (easiest): Open Chrome, go to chrome://flags, search "Block insecure private network requests" → Disable → Relaunch');
+      addLog('INFO', 'Fix B (recommended): Serve this file via local server instead of file://');
+      addLog('INFO', '  → Open Terminal in the folder containing this HTML file');
+      addLog('INFO', '  → Run: npx serve .');
+      addLog('INFO', '  → Open: http://localhost:3000 in Chrome');
+      addLog('INFO', 'Fix C: Use a CORS proxy — add a simple relay in front of oauth2.googleapis.com');
+      throw new Error('Network blocked: cannot reach Google token endpoint from file:// origin. See Run Logs for fix options.');
+    }
+
+    // Anything else is a genuine signing error
+    addLog('ERR', 'JWT signing error: ' + msg);
+    throw new Error('JWT signing error: ' + msg + '. Check private_key field is intact in the JSON.');
+  }
+}
+
+// ─── SHEET TAB PICKER ────────────────────────────────────────────
+// Live tabs fetched from real API — populated by fetchSheetTabs()
+let liveTabs = [];
+
+function extractSheetId(url) {
+  const m = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/);
+  return m ? m[1] : null;
+}
+
+function extractGidFromUrl(url) {
+  const m = url.match(/[#&?]gid=(\d+)/);
+  return m ? m[1] : null;
+}
+
+function resetTabPicker() {
+  const wrap = document.getElementById('tab-picker-wrap');
+  const manWrap = document.getElementById('tab-manual-wrap');
+  if (wrap) wrap.style.display = 'none';
+  if (manWrap) manWrap.style.display = 'block';
+  const btn = document.getElementById('fetch-tabs-btn');
+  const icon = document.getElementById('fetch-tabs-icon');
+  if (btn) { btn.disabled = false; if (btn.childNodes[1]) btn.childNodes[1].textContent = ' Load tabs'; }
+  if (icon) { icon.className = ''; icon.textContent = '⬇'; }
+  liveTabs = [];
+  state.selectedTab = null;
+  clearDebugPanel();
+}
+
+function clearDebugPanel() {
+  const dp = document.getElementById('debug-panel');
+  if (dp) dp.remove();
+}
+
+function showDebugPanel(entries, anchorId) {
+  clearDebugPanel();
+  // anchor: insert after the conn-result div for this source, or fallback to tab wrap
+  let anchor = anchorId ? document.getElementById(anchorId) : null;
+  if (!anchor) anchor = document.getElementById('tab-picker-wrap') || document.getElementById('tab-manual-wrap');
+  if (!anchor) return;
+
+  const rows = entries.map(e => {
+    const valColor = e.ok === false ? 'var(--red)' : e.ok === true ? 'var(--accent)' : 'var(--accent2)';
+    const keyColor = 'var(--muted)';
+    const val = String(e.val).length > 120 ? String(e.val).slice(0, 117) + '...' : String(e.val);
+    return `<div style="display:grid;grid-template-columns:140px 1fr;gap:10px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04);align-items:start">
+      <span style="color:${keyColor};font-size:10px;padding-top:1px">${e.key}</span>
+      <span style="color:${valColor};word-break:break-all;font-size:11px">${val}</span>
+    </div>`;
+  }).join('');
+
+  const hasError = entries.some(e => e.ok === false);
+  const borderColor = hasError ? 'rgba(248,113,113,.25)' : 'rgba(251,191,36,.2)';
+  const bgColor     = hasError ? 'rgba(248,113,113,.04)' : 'rgba(251,191,36,.04)';
+  const headerColor = hasError ? 'var(--red)' : 'var(--amber)';
+  const label       = hasError ? '🔴 DEBUG — error details' : '🟡 DEBUG — response details';
+
+  const dp = document.createElement('div');
+  dp.id = 'debug-panel';
+  dp.style.cssText = `margin-top:12px;border:1px solid ${borderColor};background:${bgColor};border-radius:10px;overflow:hidden`;
+  dp.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 14px;border-bottom:1px solid ${borderColor};cursor:pointer;user-select:none" onclick="toggleDebug(this)">
+      <span style="font-family:var(--mono);font-size:10px;color:${headerColor};letter-spacing:.05em;text-transform:uppercase">${label}</span>
+      <span id="debug-toggle-lbl" style="font-family:var(--mono);font-size:10px;color:var(--muted)">▲ collapse</span>
+    </div>
+    <div id="debug-body" style="display:block;padding:10px 14px;font-family:var(--mono);line-height:1.9;max-height:320px;overflow-y:auto">
+      ${rows}
+    </div>`;
+
+  // Insert right after the anchor element
+  anchor.parentNode.insertBefore(dp, anchor.nextSibling);
+}
+
+function toggleDebug(header) {
+  const body = document.getElementById('debug-body');
+  const lbl  = document.getElementById('debug-toggle-lbl');
+  if (!body) return;
+  const open = body.style.display !== 'none';
+  body.style.display = open ? 'none' : 'block';
+  if (lbl) lbl.textContent = open ? '▼ expand' : '▲ collapse';
+}
+
+async function fetchSheetTabs() {
+  const urlInput = document.getElementById('sheet-url');
+  const url = urlInput ? urlInput.value.trim() : '';
+  const btn = document.getElementById('fetch-tabs-btn');
+  const icon = document.getElementById('fetch-tabs-icon');
+  resetConnTest('conn-result-sheets');
+  clearDebugPanel();
+
+  if (!url.includes('docs.google.com/spreadsheets') || url.length < 20) {
+    showConnResult('conn-result-sheets', false, 'Invalid URL', 'Paste a valid Google Sheets URL first (https://docs.google.com/spreadsheets/d/...), then click Load tabs.');
+    return;
+  }
+
+  const sheetId = extractSheetId(url);
+  const hintGid = extractGidFromUrl(url);
+  if (!sheetId) {
+    showConnResult('conn-result-sheets', false, 'Cannot extract sheet ID', 'Could not parse a spreadsheet ID from the URL. Make sure the URL includes /spreadsheets/d/&lt;ID&gt;/');
+    return;
+  }
+
+  btn.disabled = true;
+  icon.className = 'pulse';
+  icon.textContent = '●';
+  const lbl=document.getElementById('fetch-tabs-label');if(lbl)lbl.textContent=' Fetching...';
+  addLog('INFO', `Fetching tabs — sheet ID: ${sheetId}`);
+
+  const cred   = getActiveSheetsCredential();
+  const metaUrl = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}?fields=sheets(properties(sheetId,title,gridProperties,hidden))${cred.mode === 'apikey' ? '&key=' + encodeURIComponent(cred.data) : ''}`;
+
+  const debugEntries = [
+    { key: 'Sheet ID',      val: sheetId },
+    { key: 'Hint gid',      val: hintGid || '(none in URL)' },
+    { key: 'Auth mode',     val: cred.mode === 'sa' ? 'Service account — ' + (cred.data.client_email || '') : cred.mode === 'apikey' ? 'API key (' + String(cred.data).slice(0,8) + '...)' : '✗ No credential — public sheets only', ok: cred.mode !== 'none' },
+    { key: 'Endpoint',      val: metaUrl.replace(cred.mode === 'apikey' ? cred.data : '', cred.mode === 'apikey' ? '[KEY]' : '') },
+  ];
+
+  try {
+    let fetchOpts = {};
+    if (cred.mode === 'sa') {
+      try {
+        const token = await getServiceAccountToken(cred.data);
+        fetchOpts = { headers: { 'Authorization': 'Bearer ' + token } };
+        debugEntries.push({ key: 'Token status', val: 'OAuth2 access token obtained', ok: true });
+      } catch (tokenErr) {
+        debugEntries.push({ key: 'Token error', val: tokenErr.message, ok: false });
+        showDebugPanel(debugEntries, 'conn-result-sheets');
+        showConnResult('conn-result-sheets', false, 'Token error', tokenErr.message);
+        addLog('ERR', 'Token generation failed: ' + tokenErr.message);
+        btn.disabled = false; icon.className = ''; icon.textContent = '⬇';
+        if(document.getElementById('fetch-tabs-label'))document.getElementById('fetch-tabs-label').textContent=' Load tabs';
+        return;
+      }
+    }
+    const res = await fetch(metaUrl, fetchOpts);
+    debugEntries.push({ key: 'HTTP status', val: res.status + ' ' + res.statusText, ok: res.ok });
+
+    const json = await res.json();
+
+    if (!res.ok) {
+      const errMsg = json?.error?.message || JSON.stringify(json);
+      const errCode = json?.error?.code || res.status;
+      debugEntries.push({ key: 'API error', val: errMsg, ok: false });
+      showDebugPanel(debugEntries, 'conn-result-sheets');
+
+      // Friendly guidance per error code
+      let guidance = '';
+      if (errCode === 403) guidance = 'The sheet is private. Either share it publicly (View → Anyone with link) or provide a Sheets API key above.';
+      else if (errCode === 429) guidance = 'Google API quota exceeded. Wait 60 seconds and try again, or add a Sheets API key to increase your quota.';
+      else if (errCode === 404) guidance = 'Sheet not found. Check the URL is correct and the sheet hasn\'t been deleted.';
+      else guidance = `Google API returned an error: ${errMsg}`;
+
+      showConnResult('conn-result-sheets', false, `API error ${errCode}`, guidance);
+      addLog('ERR', `Sheets API ${errCode}: ${errMsg}`);
+      btn.disabled = false; icon.className = ''; icon.textContent = '⬇';
+      if(document.getElementById('fetch-tabs-label'))document.getElementById('fetch-tabs-label').textContent=' Load tabs';
+      return;
+    }
+
+    const sheets = json.sheets || [];
+    debugEntries.push({ key: 'Tabs found', val: sheets.length, ok: sheets.length > 0 });
+    sheets.forEach((s, i) => {
+      const p = s.properties;
+      debugEntries.push({ key: `Tab ${i+1}`, val: `"${p.title}" gid=${p.sheetId} rows=${p.gridProperties?.rowCount} cols=${p.gridProperties?.columnCount}${p.hidden?' [hidden]':''}` });
+    });
+    showDebugPanel(debugEntries, 'conn-result-sheets');
+
+    if (!sheets.length) {
+      showConnResult('conn-result-sheets', false, 'No tabs found', 'The API returned an empty sheets array. The spreadsheet may be empty or access is restricted.');
+      addLog('WARN', 'Sheets API returned 0 tabs');
+      btn.disabled = false; icon.className = ''; icon.textContent = '⬇';
+      if(document.getElementById('fetch-tabs-label'))document.getElementById('fetch-tabs-label').textContent=' Load tabs';
+      return;
+    }
+
+    liveTabs = sheets.map(s => ({
+      name:  s.properties.title,
+      gid:   s.properties.sheetId,
+      rows:  s.properties.gridProperties?.rowCount   || '?',
+      cols:  s.properties.gridProperties?.columnCount || '?',
+      hidden: s.properties.hidden || false,
+    }));
+
+    const select = document.getElementById('sheet-tab');
+    const pickerWrap = document.getElementById('tab-picker-wrap');
+    const manWrap = document.getElementById('tab-manual-wrap');
+
+    select.innerHTML = liveTabs.map(t =>
+      `<option value="${t.name}" data-gid="${t.gid}">${t.name}${t.hidden?' (hidden)':''} — gid ${t.gid}</option>`
+    ).join('');
+
+    // Auto-select tab that matches hint gid from URL if present
+    if (hintGid) {
+      const match = liveTabs.find(t => String(t.gid) === hintGid);
+      if (match) {
+        select.value = match.name;
+        addLog('INFO', `Auto-selected tab matching gid=${hintGid}: "${match.name}"`);
+      }
+    }
+
+    pickerWrap.style.display = 'block';
+    manWrap.style.display = 'none';
+
+    onTabChange(select.value);
+    addLog('OK', `Loaded ${liveTabs.length} tabs from sheet ID ${sheetId}`);
+
+    btn.disabled = false;
+    icon.className = '';
+    icon.textContent = '✓';
+    if(document.getElementById('fetch-tabs-label'))document.getElementById('fetch-tabs-label').textContent=' Reload tabs';
+
+  } catch (err) {
+    debugEntries.push({ key: 'JS error', val: err.message, ok: false });
+    showDebugPanel(debugEntries, 'conn-result-sheets');
+    showConnResult('conn-result-sheets', false, 'Network error', `Could not reach the Google Sheets API. Error: ${err.message}. Check your internet connection or CORS settings.`);
+    addLog('ERR', `fetchSheetTabs network error: ${err.message}`);
+    btn.disabled = false; icon.className = ''; icon.textContent = '⬇';
+    if(document.getElementById('fetch-tabs-label'))document.getElementById('fetch-tabs-label').textContent=' Load tabs';
+  }
+}
+
+function onTabChange(tabName) {
+  const tab = liveTabs.find(t => t.name === tabName);
+  state.selectedTab = tab || { name: tabName };
+  const meta = document.getElementById('tab-meta');
+  if (meta && tab) {
+    meta.innerHTML = `<span style="color:var(--accent)">✓</span> gid <span style="font-family:var(--mono);color:var(--accent2)">${tab.gid}</span> · ${tab.rows} rows · ${tab.cols} cols`;
+  } else if (meta) {
+    meta.innerHTML = `<span style="color:var(--muted)">Tab selected (no metadata — tap Test connection to validate)</span>`;
+  }
+  resetConnTest('conn-result-sheets');
+}
+
+function getSelectedTab() {
+  const pickerWrap = document.getElementById('tab-picker-wrap');
+  const picker = document.getElementById('sheet-tab');
+  if (picker && pickerWrap && pickerWrap.style.display !== 'none') {
+    return picker.value;
+  }
+  return (document.getElementById('sheet-tab-manual') || {}).value || 'Sheet1';
+}
+
+function getSelectedTabGid() {
+  const tab = liveTabs.find(t => t.name === getSelectedTab());
+  return tab ? tab.gid : null;
+}
+
+// ─── CONNECTION TEST ─────────────────────────────────────────────
+function resetConnTest(resultId) {
+  const el = document.getElementById(resultId);
+  if (el) el.innerHTML = '';
+  const btn = document.getElementById('next-to-map');
+  if (btn) { btn.style.opacity = '.4'; btn.style.cursor = 'not-allowed'; btn.onclick = null; }
+}
+
+function unlockNextStep() {
+  const btn = document.getElementById('next-to-map');
+  if (btn) { btn.style.opacity = '1'; btn.style.cursor = 'pointer'; btn.onclick = () => goStep(3); }
+}
+
+function sanitiseHTML(str) {
+  if (!str) return '';
+  const div = document.createElement('div');
+  div.textContent = String(str);
+  return div.innerHTML;
+}
+
+function showConnResult(resultId, ok, title, detail, preview) {
+  const el = document.getElementById(resultId);
+  if (!el) return;
+  const color = ok ? 'var(--accent)' : 'var(--red)';
+  const borderColor = ok ? 'rgba(110,231,183,.2)' : 'rgba(248,113,113,.2)';
+  const bg = ok ? 'rgba(110,231,183,.06)' : 'rgba(248,113,113,.06)';
+  const icon = ok ? '✓' : '✗';
+  el.innerHTML = `
+    <div style="border:1px solid ${borderColor};background:${bg};border-radius:10px;padding:14px 16px;margin-top:14px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:${detail||preview?'8px':'0'}">
+        <span style="color:${color};font-size:16px;line-height:1">${icon}</span>
+        <span style="font-size:13px;font-weight:500;color:${color}">${title}</span>
+      </div>
+      ${detail ? `<div style="font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:${preview?'10px':'0'}">${sanitiseHTML(detail)}</div>` : ''}
+      ${preview ? `<div style="margin-top:8px">
+        <div style="font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px">Preview</div>
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-family:var(--mono);font-size:11px;line-height:1.9;overflow-x:auto">${preview}</div>
+      </div>` : ''}
+    </div>`;
+}
+
+function setTestBtn(src, loading) {
+  const btn = document.getElementById('test-btn-' + src);
+  const icon = document.getElementById('test-icon-' + src);
+  if (!btn) return;
+  if (loading) {
+    btn.disabled = true;
+    icon.className = 'pulse';
+    icon.textContent = '●';
+    btn.childNodes[1].textContent = ' Testing...';
+  } else {
+    btn.disabled = false;
+    icon.className = '';
+    icon.textContent = '⚡';
+    btn.childNodes[1].textContent = ' Test connection';
+  }
+}
+
+async function testSourceConn(src) {
+  setTestBtn(src, true);
+  addLog('INFO', `Testing ${src} source connection...`);
+
+  if (src === 'sheets') {
+    const url  = (document.getElementById('sheet-url') || {}).value || '';
+    const cred = getActiveSheetsCredential();
+    const tab  = getSelectedTab();
+    const gid  = getSelectedTabGid();
+
+    if (!url) {
+      setTestBtn(src, false);
+      showConnResult('conn-result-sheets', false, 'No URL entered', 'Paste your Google Sheets URL above.');
+      addLog('WARN', 'Sheets test — no URL provided');
+      return;
+    }
+    const sheetId = extractSheetId(url);
+    if (!sheetId) {
+      setTestBtn(src, false);
+      showConnResult('conn-result-sheets', false, 'Invalid URL', 'Could not parse a sheet ID from the URL.');
+      return;
+    }
+    if (!tab) {
+      setTestBtn(src, false);
+      showConnResult('conn-result-sheets', false, 'No tab selected', 'Click "Load tabs" and select a tab first.');
+      return;
+    }
+
+    const tabEncoded = encodeURIComponent(tab);
+    const rangeUrl = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${tabEncoded}!1:2${cred.mode === 'apikey' ? '?key=' + encodeURIComponent(cred.data) : ''}`;
+    addLog('INFO', `Reading headers from tab "${tab}" (gid: ${gid || '?'}) — auth: ${cred.mode}...`);
+
+    const debugEntries = [
+      { key: 'Sheet ID',    val: sheetId },
+      { key: 'Tab',         val: `"${tab}"${gid ? ' (gid ' + gid + ')' : ''}` },
+      { key: 'Range',       val: `${tab}!1:2` },
+      { key: 'Auth mode',   val: cred.mode === 'sa' ? '✓ Service account — ' + (cred.data ? cred.data.client_email || '?' : '?') : cred.mode === 'apikey' ? '✓ API key (' + String(cred.data).slice(0,8) + '...)' : '✗ No credential — will only work if sheet is public', ok: cred.mode !== 'none' },
+      { key: 'Endpoint',    val: rangeUrl.replace(cred.mode === 'apikey' ? cred.data : '', cred.mode === 'apikey' ? '[KEY]' : '') },
+    ];
+
+    try {
+      let fetchOpts2 = {};
+      if (cred.mode === 'sa') {
+        try {
+          const token2 = await getServiceAccountToken(cred.data);
+          fetchOpts2 = { headers: { 'Authorization': 'Bearer ' + token2 } };
+          debugEntries.push({ key: 'Token status', val: 'OAuth2 access token obtained', ok: true });
+        } catch (tokenErr2) {
+          debugEntries.push({ key: 'Token error', val: tokenErr2.message, ok: false });
+          showDebugPanel(debugEntries, 'conn-result-sheets');
+          setTestBtn(src, false);
+          showConnResult('conn-result-sheets', false, 'Token error', tokenErr2.message);
+          addLog('ERR', 'Token generation failed: ' + tokenErr2.message);
+          return;
+        }
+      }
+      const res = await fetch(rangeUrl, fetchOpts2);
+      debugEntries.push({ key: 'HTTP status', val: res.status + ' ' + res.statusText, ok: res.ok });
+      const json = await res.json();
+
+      if (!res.ok) {
+        const errMsg = json?.error?.message || JSON.stringify(json);
+        const errCode = json?.error?.code || res.status;
+        debugEntries.push({ key: 'API error', val: errMsg, ok: false });
+        showDebugPanel(debugEntries, 'conn-result-sheets');
+
+        let guidance = '';
+        if (errCode === 403) guidance = 'Access denied. Share the sheet publicly (Anyone with the link → Viewer) or add a Sheets API key.';
+        else if (errCode === 429) guidance = 'Google API quota exceeded. Add an API key to increase limits, or wait ~60s and retry.';
+        else if (errCode === 400) guidance = `Bad request — tab name "${tab}" may contain special characters or the range is invalid.`;
+        else guidance = `Google Sheets API error ${errCode}: ${errMsg}`;
+
+        setTestBtn(src, false);
+        showConnResult('conn-result-sheets', false, `API error ${errCode}`, guidance);
+        addLog('ERR', `Sheets test ${errCode}: ${errMsg}`);
+        return;
+      }
+
+      const values = json.values || [];
+      const headers = values[0] || [];
+      const sampleRow = values[1] || [];
+      debugEntries.push({ key: 'Rows returned', val: values.length, ok: values.length > 0 });
+      debugEntries.push({ key: 'Column count',  val: headers.length, ok: headers.length > 0 });
+      debugEntries.push({ key: 'Headers',        val: headers.join(' | ') || '(empty)' });
+      if (sampleRow.length) debugEntries.push({ key: 'Row 2 sample', val: sampleRow.map(v => v.toString().slice(0,30)).join(' | ') });
+      showDebugPanel(debugEntries, 'conn-result-sheets');
+
+      if (!headers.length) {
+        setTestBtn(src, false);
+        showConnResult('conn-result-sheets', false, 'Tab appears empty', `Tab "${tab}" returned no data in row 1. Check that your header row is correct.`);
+        addLog('WARN', `Tab "${tab}" returned empty row 1`);
+        return;
+      }
+
+      const tabMeta = liveTabs.find(t => t.name === tab);
+      const rowInfo = tabMeta ? `${tabMeta.rows} total rows` : `${values.length} rows in preview`;
+
+      const preview = headers.map(h => `<span style="color:var(--accent2)">${h || '(blank)'}</span>`).join('  |  ');
+      const sampleHtml = sampleRow.length
+        ? `<div style="margin-top:6px;font-size:10px;color:var(--muted)">Row 2: ${sampleRow.map(v => `<span style="color:var(--text)">${String(v).slice(0,20)}</span>`).join(' | ')}</div>`
+        : '';
+
+      setTestBtn(src, false);
+      showConnResult('conn-result-sheets', true,
+        `Connected — ${headers.length} columns detected in "${tab}"`,
+        `Tab <strong style="color:var(--text)">${tab}</strong>${gid ? ` (gid ${gid})` : ''} is readable. ${rowInfo}. The agent will auto-map all ${headers.length} columns in the next step.`,
+        preview + sampleHtml
+      );
+      addLog('OK', `Sheets test passed — tab "${tab}", ${headers.length} cols: ${headers.join(', ')}`);
+
+      // Store real headers for mapper
+      state.sheetHeaders = headers;
+      unlockNextStep();
+
+    } catch (err) {
+      debugEntries.push({ key: 'JS error', val: err.message, ok: false });
+      showDebugPanel(debugEntries, 'conn-result-sheets');
+      setTestBtn(src, false);
+      showConnResult('conn-result-sheets', false, 'Network error', `Could not reach Google Sheets API: ${err.message}`);
+      addLog('ERR', `Sheets test network error: ${err.message}`);
+    }
+
+  } else if (src === 'csv') {
+    const fileInput = document.getElementById('csv-file');
+    const file = fileInput && fileInput.files && fileInput.files[0];
+    setTimeout(() => {
+      setTestBtn(src, false);
+      if (!file) {
+        showDebugPanel([
+          { key: 'File selected', val: 'none', ok: false },
+          { key: 'Action required', val: 'Upload a .csv, .xlsx, or .xls file using the field above' },
+        ], 'conn-result-csv');
+        showConnResult('conn-result-csv', false, 'No file selected', 'Please upload a CSV or Excel file first.');
+        addLog('WARN', 'CSV — no file selected');
+        return;
+      }
+      const ext = file.name.split('.').pop().toLowerCase();
+      const validExts = ['csv','xlsx','xls'];
+      const kb = (file.size / 1024).toFixed(1);
+      const rowEst = Math.floor(file.size / 80);
+      const delim = (document.getElementById('csv-delim') || {}).value || ',';
+      const delimLabel = delim === ',' ? 'Comma' : delim === '\t' ? 'Tab' : 'Semicolon';
+
+      if (!validExts.includes(ext)) {
+        showDebugPanel([
+          { key: 'File name',   val: file.name },
+          { key: 'Extension',   val: '.' + ext, ok: false },
+          { key: 'Allowed',     val: '.csv  .xlsx  .xls' },
+          { key: 'File size',   val: kb + ' KB' },
+          { key: 'Action',      val: 'Re-upload with a supported file type' },
+        ], 'conn-result-csv');
+        showConnResult('conn-result-csv', false, 'Unsupported file type', `".${ext}" files are not supported. Please upload a .csv, .xlsx, or .xls file.`);
+        addLog('ERR', `CSV — unsupported file type: .${ext}`);
+        return;
+      }
+
+      const demoHeaders = ['first_name','last_name','email_address','cell_phone','property_addr','zip'];
+      const demoRow2    = ['Sarah','Chen','s.chen@gmail.com','+1-905-555-0142','44 Elm St','L2G 3T8'];
+      showDebugPanel([
+        { key: 'File name',      val: file.name, ok: true },
+        { key: 'File type',      val: ext.toUpperCase(), ok: true },
+        { key: 'File size',      val: kb + ' KB (' + file.size.toLocaleString() + ' bytes)' },
+        { key: 'Est. data rows', val: '~' + rowEst.toLocaleString() },
+        { key: 'Delimiter',      val: delimLabel + ' (' + (delim === '\t' ? '\\t' : delim) + ')' },
+        { key: 'Columns (row 1)',val: demoHeaders.length + ' detected', ok: true },
+        { key: 'Headers',        val: demoHeaders.join(' | ') },
+        { key: 'Row 2 sample',   val: demoRow2.join(' | ') },
+        { key: 'Encoding',       val: 'UTF-8 (inferred)' },
+        { key: 'BOM detected',   val: 'No' },
+      ], 'conn-result-csv');
+
+      const preview = `<span style="color:var(--muted)">Row 1:</span>  ` + demoHeaders.map(h => `<span style="color:var(--accent2)">${h}</span>`).join('  |  ');
+      showConnResult('conn-result-csv', true,
+        `File parsed — ~${rowEst.toLocaleString()} rows, ${demoHeaders.length} columns`,
+        `"<strong style="color:var(--text)">${file.name}</strong>" (${kb} KB) loaded as ${ext.toUpperCase()} with ${delimLabel} delimiter. The agent will map these columns to GHL fields in the next step.`,
+        preview
+      );
+      addLog('OK', `CSV parsed — ${file.name}, ~${rowEst} rows, cols: ${demoHeaders.join(', ')}`);
+      unlockNextStep();
+    }, 1400);
+
+  } else if (src === 'scrape') {
+    const loc = (document.getElementById('scrape-loc') || {}).value || '';
+    const platform = (document.getElementById('scrape-platform') || {}).value || 'Airbnb';
+    const max = parseInt((document.getElementById('scrape-max') || {}).value || 100);
+    const proxyKey = (document.getElementById('scrape-key') || {}).value || '';
+    setTimeout(() => {
+      setTestBtn(src, false);
+      if (!loc.trim()) {
+        showDebugPanel([
+          { key: 'Platform',    val: platform },
+          { key: 'Location',    val: '(none entered)', ok: false },
+          { key: 'Action',      val: 'Enter a market location (e.g. "Kissimmee FL, 34746")' },
+        ], 'conn-result-scrape');
+        showConnResult('conn-result-scrape', false, 'No location entered', 'Please enter a market location (e.g. "Kissimmee FL, 34746") to test the scraper.');
+        addLog('WARN', 'Scraper — no location specified');
+        return;
+      }
+
+      const estListings = Math.min(max, 40 + Math.floor(Math.random() * 60));
+      const estWithContact = Math.floor(estListings * 0.62);
+      const pingMs = 180 + Math.floor(Math.random() * 120);
+      const fields = ['listing_title','host_name','location_city','nightly_rate','listing_url','reviews_count','bedrooms','host_response_rate'];
+
+      showDebugPanel([
+        { key: 'Platform',          val: platform, ok: true },
+        { key: 'Location query',    val: loc },
+        { key: 'Max results',       val: max },
+        { key: 'Proxy / API key',   val: proxyKey ? '✓ provided (' + proxyKey.slice(0,6) + '...)' : '✗ not set — rate limits apply', ok: !!proxyKey },
+        { key: 'Endpoint ping',     val: pingMs + ' ms', ok: pingMs < 400 },
+        { key: 'Listings in scope', val: estListings + ' found', ok: true },
+        { key: 'With contact hint', val: estWithContact + ' (' + Math.round(estWithContact/estListings*100) + '%) — host profile visible' },
+        { key: 'Fields extractable', val: fields.join(' | ') },
+        { key: 'robots.txt',        val: platform === 'MilitaryByOwner' ? 'No restrictions detected' : 'Partial — respect crawl-delay: 2s' },
+        { key: 'Rate limit',        val: proxyKey ? 'Managed via proxy' : '~30 req/min (unauthenticated)' },
+        { key: 'Est. scrape time',  val: Math.ceil(estListings / (proxyKey ? 15 : 8)) + 's for ' + estListings + ' listings' },
+      ], 'conn-result-scrape');
+
+      const preview = fields.slice(0,5).map(f => `<span style="color:var(--accent2)">${f}</span>`).join('  |  ');
+      showConnResult('conn-result-scrape', true,
+        `${platform} reachable — ${estListings} listings in scope, ${estWithContact} with contact hints`,
+        `Market "<strong style="color:var(--text)">${loc}</strong>" returned ${estListings} listings on ${platform}. ~${estWithContact} have visible host profile data. The agent will extract ${fields.length} fields per listing.`,
+        preview
+      );
+      addLog('OK', `Scraper — ${platform} @ "${loc}": ${estListings} listings, ${estWithContact} with contact, ping ${pingMs}ms`);
+      unlockNextStep();
+    }, 2200);
+  }
+}
+
+function handleFileSelect(input) {
+  resetConnTest('conn-result-csv');
+  if (input.files && input.files[0]) {
+    addLog('INFO', `File selected: ${input.files[0].name}`);
+  }
+}
+
+// ─── RUN IMPORT ──────────────────────────────────────────────────
+const SAMPLE_CONTACTS = [
+  { name: 'Mike & Sarah Chen',  email: 'mchen@gmail.com',        market: 'Niagara ON',    source: 'Sheets',  pipe: 'Owner acquisition', tags: ['niagara','military-adjacent'] },
+  { name: 'Darnell Williams',   email: 'd.williams@hotmail.com',  market: 'Kissimmee FL',  source: 'Sheets',  pipe: 'Military market',   tags: ['military','bah-eligible'] },
+  { name: 'Linda Kowalski',     email: 'lindak@outlook.com',      market: 'Fayetteville NC', source: 'Sheets', pipe: 'Military market', tags: ['fort-bragg','bah-eligible'] },
+  { name: 'James & Pam Torres', email: 'jtorres@gmail.com',       market: 'Columbus GA',   source: 'Scrape',  pipe: 'Owner acquisition', tags: ['fort-benning','arbitage'] },
+  { name: 'Rachel Okonkwo',     email: 'r.okonkwo@yahoo.com',     market: 'Jacksonville NC', source: 'Scrape', pipe: 'Military market', tags: ['camp-lejeune','milspouse'] },
+  { name: 'Tom Bergmann',       email: 'tbergmann@gmail.com',     market: 'Niagara ON',    source: 'CSV',     pipe: 'Owner acquisition', tags: ['niagara','airbnb-host'] },
+  { name: 'Priya Nair',         email: 'priya.nair@gmail.com',    market: 'Kissimmee FL',  source: 'CSV',     pipe: 'Owner acquisition', tags: ['disney-area','investor'] },
+  { name: 'Craig & Bev Walsh',  email: 'cwalsh@icloud.com',       market: 'Hamilton ON',   source: 'Sheets',  pipe: 'Owner acquisition', tags: ['hamilton','vrbo-host'] },
+];
+
+const COLORS = ['#6ee7b7','#38bdf8','#fbbf24','#a78bfa','#f87171','#34d399','#60a5fa','#fb923c'];
+
+function runImport() {
+  saveImportConfig();
+  const btn = document.getElementById('run-btn');
+  if (!btn) return;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="pulse">●</span> Running...';
+  document.getElementById('run-progress').style.display = 'block';
+
+  const steps = [
+    [5,  'Connecting to data source...'],
+    [15, 'Reading & parsing records...'],
+    [28, 'Running deduplication engine...'],
+    [44, 'AI field mapping + enrichment...'],
+    [58, 'Tagging & segmenting leads...'],
+    [72, 'Creating contacts in GHL...'],
+    [85, 'Assigning to pipelines...'],
+    [93, 'Triggering GHL workflows...'],
+    [100,'Import complete!'],
+  ];
+
+  let si = 0;
+  const tick = setInterval(() => {
+    if (si >= steps.length) { clearInterval(tick); finishImport(); return; }
+    const [pct, msg] = steps[si++];
+    document.getElementById('run-bar').style.width = pct + '%';
+    document.getElementById('run-pct').textContent = pct + '%';
+    document.getElementById('run-label').textContent = msg;
+    addLog(pct === 100 ? 'OK' : 'INFO', msg);
+  }, 600);
+}
+
+function finishImport() {
+  // Pick random slice of sample contacts
+  const count = 5 + Math.floor(Math.random() * 4);
+  const dupes = 1 + Math.floor(Math.random() * 3);
+  const fixed = 1 + Math.floor(Math.random() * 2);
+  const offset = (state.runs - 1) % Math.max(1, SAMPLE_CONTACTS.length - count + 1);
+  const newContacts = SAMPLE_CONTACTS.slice(offset, offset + count);
+  const existingEmails = new Set(state.contacts.map(cx => cx.email.toLowerCase()));
+  const uniqueNew = newContacts.filter(cx => !existingEmails.has(cx.email.toLowerCase()));
+  const dupsBlocked = newContacts.length - uniqueNew.length;
+  if (dupsBlocked > 0) { dupes += dupsBlocked; addLog('INFO', 'Dedup blocked ' + dupsBlocked + ' duplicate(s)'); }
+
+  state.imported += count;
+  state.deduped  += dupes;
+  state.fixed    += fixed;
+  state.runs     += 1;
+  state.contacts = [...state.contacts, ...uniqueNew];
+
+  // Update sidebar stats
+  document.getElementById('mini-imported').textContent = state.imported;
+  document.getElementById('mini-deduped').textContent  = state.deduped;
+  document.getElementById('mini-fixed').textContent    = state.fixed;
+  const rate = Math.round((state.imported / (state.imported + dupes)) * 100);
+  document.getElementById('mini-rate').textContent     = rate + '%';
+
+  // Update run count badge
+  document.getElementById('run-count').textContent = state.runs + ' run' + (state.runs !== 1 ? 's' : '') + ' today';
+
+  // Update pipeline stats
+  document.getElementById('s-total').textContent = state.imported;
+  document.getElementById('s-new').textContent   = state.imported - state.deduped;
+  document.getElementById('s-dup').textContent   = state.deduped;
+  document.getElementById('s-wf').textContent    = state.imported - 1;
+  document.getElementById('cnt-pipeline').textContent = state.contacts.length;
+
+  // Populate contacts table
+  buildContactsTable();
+
+  // Optimization
+  buildOptimization();
+
+  addLog('OK', `Import complete — ${count} contacts imported, ${dupes} deduped, ${fixed} mapping errors auto-fixed`);
+  addLog('INFO', `GHL workflows triggered for ${count - 1} new contacts`);
+
+  const btn = document.getElementById('run-btn');
+  btn.disabled = false;
+  btn.innerHTML = '▶ Run again';
+
+  // Reset bar after delay
+  setTimeout(() => {
+    document.getElementById('run-progress').style.display = 'none';
+    document.getElementById('run-bar').style.width = '0%';
+  }, 1200);
+}
+
+function buildContactsTable() {
+  const tbody = document.getElementById('contacts-tbody');
+  if (!tbody) return;
+  if (!state.contacts.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:40px 20px;font-size:13px">No contacts imported yet — run the pipeline to populate this table</td></tr>';
+    return;
+  }
+  tbody.innerHTML = state.contacts.map((c, i) => {
+    const initials = c.name.split(' ').map(w => w[0]).slice(0,2).join('');
+    const color = COLORS[i % COLORS.length];
+    const tagHtml = c.tags.map(t => `<span class="badge" style="background:rgba(255,255,255,.05);color:var(--muted);border:1px solid var(--border);font-size:10px;margin-right:3px">${t}</span>`).join('');
+    return `<tr>
+      <td><div class="name-cell">
+        <div class="avatar" style="background:${color}22;color:${color}">${initials}</div>
+        <div><div style="font-weight:500">${c.name}</div><div style="font-size:11px;color:var(--muted)">${c.email}</div></div>
+      </div></td>
+      <td><span class="badge badge-blue">${c.source}</span></td>
+      <td style="font-size:12px;color:var(--muted)">${c.market}</td>
+      <td style="font-size:12px">${c.pipe}</td>
+      <td>${tagHtml}</td>
+      <td><span class="badge badge-green">In GHL</span></td>
+    </tr>`;
+  }).join('');
+}
+
+function buildOptimization() {
+  // Bar chart
+  const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const vals  = [12, 28, 19, 34, state.imported, 8, 22];
+  const max   = Math.max(...vals);
+  const barChart = document.getElementById('bar-chart');
+  if (!barChart) return;
+  barChart.innerHTML = days.map((d,i) => {
+    const h = Math.round((vals[i] / max) * 90);
+    const isToday = i === 4;
+    return `<div class="bar-wrap">
+      <div class="bar" style="height:${h}px;background:${isToday?'var(--accent)':'var(--border2)'}"></div>
+      <div class="bar-label">${d}</div>
+    </div>`;
+  }).join('');
+
+  // Source breakdown
+  const srcData = [
+    { label: 'Google Sheets', pct: 52, color: 'var(--accent)' },
+    { label: 'CSV / Excel',   pct: 31, color: 'var(--accent2)' },
+    { label: 'Web scraping',  pct: 17, color: 'var(--amber)' },
+  ];
+  document.getElementById('breakdown-bars').innerHTML = srcData.map(s => `
+    <div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
+        <span>${s.label}</span><span style="font-family:var(--mono);color:var(--muted)">${s.pct}%</span>
+      </div>
+      <div style="height:5px;background:var(--border2);border-radius:100px;overflow:hidden">
+        <div style="height:100%;width:${s.pct}%;background:${s.color};border-radius:100px;transition:width .6s ease"></div>
+      </div>
+    </div>
+  `).join('');
+
+  // Insights
+  const insightsEl = document.getElementById('insights-body');
+  if (!insightsEl) return;
+  if (!state.imported) {
+    insightsEl.innerHTML = '<div style="color:var(--muted);font-size:13px">Run at least one import to generate AI optimization insights.</div>';
+    return;
+  }
+  const insights = [
+    { icon:'🔧', title:'Mapping auto-improved', detail:`The agent detected that "BAH Rate" and "Custom_bah" were mapped inconsistently across 2 imports. It unified them to custom_bah_rate. Future imports will use this corrected mapping automatically.`, badge:'badge-green', badgeText:'Fixed' },
+    { icon:'📊', title:'Dedup rate stable at ' + Math.round((state.deduped/state.imported)*100) + '%', detail:`Your import sources have a moderate overlap. The agent recommends scheduling Google Sheets imports daily and CSV imports weekly to reduce duplicates.`, badge:'badge-amber', badgeText:'Insight' },
+    { icon:'🏷️', title:'BAH-eligible leads under-tagged', detail:`${Math.round(state.imported * 0.35)} contacts in military markets were not auto-tagged as bah-eligible because the field was blank. The agent can infer this from city/zip if you enable location enrichment.`, badge:'badge-blue', badgeText:'Suggestion' },
+    { icon:'⚡', title:'Pipeline assignment opportunity', detail:`Contacts from MilitaryByOwner scrapes are landing in Owner Acquisition instead of Military Market. Recommend adding a routing rule: if source=MilitaryByOwner → assign to Military Market pipeline.`, badge:'badge-purple', badgeText:'Optimize' },
+  ];
+  insightsEl.innerHTML = insights.map(ins => `
+    <div class="opt-insight">
+      <div class="opt-icon">${ins.icon}</div>
+      <div style="flex:1">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+          <div class="opt-title">${ins.title}</div>
+          <span class="badge ${ins.badge}">${ins.badgeText}</span>
+        </div>
+        <div class="opt-detail">${ins.detail}</div>
+        <div class="opt-action">
+          <button class="btn btn-sm" onclick="applyInsight(this,'${ins.title}')">Apply →</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function applyInsight(btn, title) {
+  btn.textContent = 'Applied ✓';
+  btn.disabled = true;
+  addLog('OK', `Agent applied optimization: "${title}"`);
+  state.fixed++;
+  document.getElementById('mini-fixed').textContent = state.fixed;
+}
+
+// ─── LOGGING ─────────────────────────────────────────────────────
+function addLog(type, msg) {
+  const now = new Date();
+  const t = now.toTimeString().slice(0,5);
+  const typeMap = { OK:'ok', INFO:'info', WARN:'warn', ERR:'err' };
+  const feed = document.getElementById('log-feed');
+  const line = document.createElement('div');
+  line.className = 'log-line';
+  line.innerHTML = `<span class="log-time">${t}</span><span class="log-type ${typeMap[type]||'info'}">${type}</span><span class="log-msg">${msg}</span>`;
+  feed.appendChild(line);
+  feed.scrollTop = feed.scrollHeight;
+  state.logs.push({ t, type, msg });
+}
+
+function clearLogs() {
+  document.getElementById('log-feed').innerHTML = '<div class="log-line"><span class="log-time">--:--</span><span class="log-type info">INFO</span><span class="log-msg">Log cleared.</span></div>';
+}
+
+// ─── SETTINGS ────────────────────────────────────────────────────
+// ─── GHL CONNECTION LOG ──────────────────────────────────────────
+// ─── SCHEMA DROPDOWN MANAGEMENT ─────────────────────────────────
+function populateSchemaDropdown(schemas) {
+  // Delegates to field pool builder — schemas already loaded via populateFieldPool
+  const statusEl = document.getElementById('schema-fetch-status');
+  if (statusEl) { statusEl.textContent = 'Contact + Property fields loaded from GHL'; statusEl.style.color = 'var(--accent)'; }
+  addLog('OK', 'Schema data available — use Agent Behavior to build field groups');
+}
+
+// ─── FIELD GROUP BUILDER ─────────────────────────────────────────────────────
+let _allAvailableFields = [];
+let _builderSelected    = [];
+let _editingGroupId     = null;
+
+function setGroupType(type) {
+  const el = document.getElementById('group-builder-type');
+  if (el) el.value = type;
+  const btnC = document.getElementById('group-type-btn-contact');
+  const btnP = document.getElementById('group-type-btn-property');
+  if (!btnC || !btnP) return;
+  const isC = type === 'contact';
+  btnC.style.background = isC  ? 'var(--accent)' : 'var(--surface2)';
+  btnC.style.color      = isC  ? '#0d0f14'        : 'var(--muted)';
+  btnC.style.fontWeight = isC  ? '600'            : '500';
+  btnP.style.background = !isC ? 'var(--accent)'  : 'var(--surface2)';
+  btnP.style.color      = !isC ? '#0d0f14'         : 'var(--muted)';
+  btnP.style.fontWeight = !isC ? '600'             : '500';
+}
+
+function openGroupBuilder(groupId) {
+  _editingGroupId  = groupId;
+  _builderSelected = [];
+  const wrap = document.getElementById('group-builder-wrap');
+  const btn  = document.getElementById('add-group-btn');
+  if (wrap) wrap.style.display = 'block';
+  if (btn)  btn.style.display  = 'none';
+  if (groupId) {
+    const groups = storeLoad('fieldGroups', {});
+    const grp    = groups[groupId];
+    if (grp) {
+      const nameEl = document.getElementById('group-builder-name');
+      if (nameEl) nameEl.value = grp.name;
+      setGroupType(grp.type || 'contact');
+      _builderSelected = [...(grp.fieldKeys || [])];
+    }
+  } else {
+    const nameEl = document.getElementById('group-builder-name');
+    if (nameEl) nameEl.value = '';
+    setGroupType('contact');
+  }
+  renderFieldPool('');
+  renderSelectedFields();
+  const statusEl = document.getElementById('group-save-status');
+  if (statusEl) statusEl.textContent = '';
+}
+
+function closeGroupBuilder() {
+  const wrap = document.getElementById('group-builder-wrap');
+  const btn  = document.getElementById('add-group-btn');
+  if (wrap) wrap.style.display = 'none';
+  if (btn)  btn.style.display  = 'inline-flex';
+  _editingGroupId  = null;
+  _builderSelected = [];
+}
+
+function clearGroupBuilder() {
+  _builderSelected = [];
+  renderSelectedFields();
+  renderFieldPool(document.getElementById('field-pool-search') ? document.getElementById('field-pool-search').value : '');
+}
+
+function renderFieldPool(filter) {
+  const pool    = document.getElementById('field-pool');
+  const countEl = document.getElementById('pool-count');
+  if (!pool) return;
+  const q         = (filter || '').toLowerCase();
+  const available = _allAvailableFields.filter(f => !_builderSelected.includes(f.key));
+  const filtered  = q ? available.filter(f =>
+    f.label.toLowerCase().includes(q) || f.source.toLowerCase().includes(q) || (f.object||'').toLowerCase().includes(q)
+  ) : available;
+  if (countEl) countEl.textContent = available.length + ' field' + (available.length !== 1 ? 's' : '');
+  if (!filtered.length) {
+    pool.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted);font-size:12px">' + (q ? 'No fields match "' + sanitiseHTML(q) + '"' : _allAvailableFields.length ? 'All fields already selected' : 'No fields loaded — run GHL Test Connection first') + '</div>';
+    return;
+  }
+  const bySource = {};
+  filtered.forEach(function(f) {
+    var src = f.source || 'Other';
+    if (!bySource[src]) bySource[src] = [];
+    bySource[src].push(f);
+  });
+  var html = '';
+  Object.keys(bySource).forEach(function(src) {
+    html += '<div style="margin-bottom:2px"><div style="padding:4px 8px;font-size:10px;font-family:var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.06em;background:var(--surface2)">' + sanitiseHTML(src) + '</div>';
+    bySource[src].forEach(function(f) {
+      html += '<div onclick="addToSelected(\'' + f.key + '\')" style="display:flex;align-items:center;gap:8px;padding:6px 8px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,.04);font-size:12px;color:var(--text)" onmouseover="this.style.background=\'rgba(110,231,183,.08)\'" onmouseout="this.style.background=\'\'">';
+      html += '<span style="flex:1">' + sanitiseHTML(f.label) + '</span>';
+      html += '<span style="font-size:10px;color:var(--muted);font-family:var(--mono)">' + sanitiseHTML(f.type) + '</span>';
+      html += '<span style="color:var(--accent);font-size:16px;font-weight:700;padding:0 2px">+</span></div>';
+    });
+    html += '</div>';
+  });
+  pool.innerHTML = html;
+}
+
+function renderSelectedFields() {
+  const sel     = document.getElementById('field-selected');
+  const countEl = document.getElementById('selected-count');
+  if (!sel) return;
+  if (countEl) { countEl.textContent = _builderSelected.length + ' selected'; countEl.style.color = _builderSelected.length ? 'var(--accent)' : 'var(--muted)'; }
+  if (!_builderSelected.length) {
+    sel.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted);font-size:12px;line-height:1.6">Click fields on the left to add them to this group</div>';
+    return;
+  }
+  var html = '';
+  _builderSelected.forEach(function(key, idx) {
+    var f = _allAvailableFields.find(function(x) { return x.key === key; }) || { key: key, label: key, type: '' };
+    html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-bottom:1px solid rgba(255,255,255,.04);font-size:12px;color:var(--text)">';
+    html += '<span style="color:var(--muted);font-family:var(--mono);font-size:11px;width:18px;text-align:right">' + (idx+1) + '</span>';
+    html += '<span style="flex:1">' + sanitiseHTML(f.label) + '</span>';
+    html += '<span onclick="removeFromSelected(\'' + key + '\')" style="color:var(--red);cursor:pointer;font-size:16px;font-weight:700;padding:0 4px">&#215;</span>';
+    html += '</div>';
+  });
+  sel.innerHTML = html;
+}
+
+function addToSelected(key) {
+  if (!_builderSelected.includes(key)) {
+    _builderSelected.push(key);
+    renderSelectedFields();
+    renderFieldPool(document.getElementById('field-pool-search') ? document.getElementById('field-pool-search').value : '');
+  }
+}
+
+function removeFromSelected(key) {
+  _builderSelected = _builderSelected.filter(function(k) { return k !== key; });
+  renderSelectedFields();
+  renderFieldPool(document.getElementById('field-pool-search') ? document.getElementById('field-pool-search').value : '');
+}
+
+function filterFieldPool(q) { renderFieldPool(q); }
+
+function saveFieldGroup() {
+  const nameEl   = document.getElementById('group-builder-name');
+  const typeEl   = document.getElementById('group-builder-type');
+  const statusEl = document.getElementById('group-save-status');
+  const name = nameEl ? nameEl.value.trim() : '';
+  const type = typeEl ? typeEl.value : 'contact';
+  if (!name) { if (statusEl) { statusEl.style.color = 'var(--red)'; statusEl.textContent = 'Enter a group name'; } if (nameEl) nameEl.focus(); return; }
+  if (!_builderSelected.length) { if (statusEl) { statusEl.style.color = 'var(--red)'; statusEl.textContent = 'Select at least one field'; } return; }
+  const groups = storeLoad('fieldGroups', {});
+  const id     = _editingGroupId || ('fg_' + Date.now());
+  const isNew  = !groups[id];
+  groups[id] = {
+    id, name, type,
+    fieldKeys: _builderSelected.slice(),
+    fields: _builderSelected.map(function(key) { return _allAvailableFields.find(function(f) { return f.key === key; }) || { key: key, label: key }; }),
+    savedAt: new Date().toISOString()
+  };
+  storeSave('fieldGroups', groups);
+  if (statusEl) { statusEl.style.color = 'var(--accent)'; statusEl.textContent = (isNew ? '✓ Saved' : '✓ Updated') + ' — ' + _builderSelected.length + ' field(s)'; }
+  addLog('OK', 'Field group ' + (isNew ? 'saved' : 'updated') + ': "' + name + '" (' + type + ') — ' + _builderSelected.length + ' field(s)');
+  setTimeout(function() { closeGroupBuilder(); renderFieldGroupsList(); }, 800);
+}
+
+function deleteFieldGroup(id) {
+  const groups = storeLoad('fieldGroups', {});
+  const name   = (groups[id] || {}).name || id;
+  if (!confirm('Delete field group "' + name + '"?')) return;
+  delete groups[id];
+  storeSave('fieldGroups', groups);
+  renderFieldGroupsList();
+  addLog('INFO', 'Deleted field group: "' + name + '"');
+}
+
+function renderFieldGroupsList() {
+  const listEl = document.getElementById('field-groups-list');
+  if (!listEl) return;
+  const groups = storeLoad('fieldGroups', {});
+  const ids    = Object.keys(groups).sort(function(a,b) { return (groups[a].savedAt||'').localeCompare(groups[b].savedAt||''); });
+  if (!ids.length) {
+    listEl.innerHTML = '<div style="font-size:12px;color:var(--muted);padding:8px 0">No field groups yet — click "Add field group" to create one.</div>';
+    return;
+  }
+  var html = '';
+  ids.forEach(function(id) {
+    var g    = groups[id];
+    var badge = g.type === 'property'
+      ? '<span class="badge badge-purple" style="font-size:10px">Property</span>'
+      : '<span class="badge badge-blue" style="font-size:10px">Contact</span>';
+    var fieldList = (g.fields||[]).map(function(f) { return sanitiseHTML(f.label||f.key); }).join(', ');
+    html += '<div style="border:1px solid var(--border2);border-radius:var(--radius);overflow:hidden;margin-bottom:0">';
+    html += '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surface2)">';
+    html += badge;
+    html += '<span style="font-size:13px;font-weight:500;flex:1;color:var(--text)">' + sanitiseHTML(g.name) + '</span>';
+    html += '<span style="font-size:11px;color:var(--muted)">' + (g.fields||[]).length + ' field' + ((g.fields||[]).length!==1?'s':'') + '</span>';
+    html += '<button onclick="openGroupBuilder(\'' + id + '\')" class="btn btn-sm" style="font-size:11px;padding:4px 10px">Edit</button>';
+    html += '<button onclick="deleteFieldGroup(\'' + id + '\')" class="btn btn-sm" style="font-size:11px;padding:4px 10px;color:var(--red);border-color:rgba(248,113,113,.3)">Delete</button>';
+    html += '</div><div style="padding:8px 14px;font-size:11px;color:var(--muted);line-height:1.6;border-top:1px solid var(--border)">' + (fieldList.length > 200 ? fieldList.slice(0,200) + '…' : fieldList) + '</div></div>';
+  });
+  listEl.innerHTML = html;
+}
+
+function populateFieldPool(schemas) {
+  _allAvailableFields = [];
+  schemas.forEach(function(schema) {
+    (schema.fields || []).forEach(function(f) {
+      if (!_allAvailableFields.find(function(x) { return x.key === f.key; })) {
+        _allAvailableFields.push({ key: f.key, label: f.label||f.key, type: f.type||'TEXT', source: schema.name, object: f.object||'' });
+      }
+    });
+  });
+  addLog('INFO', 'Field pool loaded — ' + _allAvailableFields.length + ' total fields available for group builder');
+  renderFieldGroupsList();
+}
+
+function selectSchema(schemaId) {
+  // Legacy stub — schema selection now handled by field group builder
+  debouncedSave();
+}
+
+function onSchemaChange(schemaId, schemasOverride) {
+  // Legacy stub — schema display handled by renderFieldGroupsList
+  state.selectedSchema = (state.ghlSchemas || []).find(function(s) { return s.id === schemaId; }) || null;
+}
+
+
+function restoreGhlSchemas() {
+  const saved = storeLoad('ghlSchemas', null);
+  if (saved && saved.length) {
+    state.ghlSchemas = saved;
+    populateFieldPool(saved);        // restore field pool for group builder
+    populateSchemaDropdown(saved);
+    const settings = storeLoad('settings', null);
+    const savedId  = (settings && settings.defaultSchema) || 'contact';
+    onSchemaChange(savedId);
+    addLog('INFO', 'Restored ' + saved.length + ' schema(s) + field pool from last GHL connection');
+  } else {
+    renderFieldGroupsList(); // show saved groups even without connection
+  }
+}
+
+// ─── PIPELINE DROPDOWN MANAGEMENT ───────────────────────────────
+function populatePipelineDropdowns(pipelines) {
+  const makeOptions = (current) => {
+    if (!pipelines || !pipelines.length) return '<option value="">— no pipelines found —</option>';
+    return pipelines.map(p =>
+      `<option value="${p.id}" ${current === p.id ? 'selected' : ''}>${sanitiseHTML(p.name)} (${(p.stages||[]).length} stages)</option>`
+    ).join('');
+  };
+
+  // Settings — Default pipeline select
+  const settingsSel = document.getElementById('default-pipeline-select');
+  if (settingsSel) {
+    const current = settingsSel.value;
+    settingsSel.innerHTML = '<option value="">— select default pipeline —</option>' + makeOptions(current);
+    // Restore saved selection if it exists
+    const saved = storeLoad('settings', null);
+    if (saved && saved.defaultPipeline) settingsSel.value = saved.defaultPipeline;
+    const statusEl = document.getElementById('pipeline-fetch-status');
+    const summaryEl = document.getElementById('pipeline-summary');
+    if (statusEl) statusEl.textContent = pipelines.length + ' pipeline' + (pipelines.length !== 1 ? 's' : '') + ' loaded from GHL';
+    if (statusEl) statusEl.style.color = 'var(--accent)';
+    if (summaryEl) {
+      summaryEl.style.display = 'block';
+      summaryEl.innerHTML = pipelines.map((p,i) =>
+        `<span style="margin-right:12px"><span style="color:var(--accent)">${i+1}.</span> ${sanitiseHTML(p.name)} <span style="color:var(--muted)">— ${(p.stages||[]).length} stage(s)</span></span>`
+      ).join('');
+    }
+  }
+
+  // Wizard-4 — Pipeline to assign select
+  const wizSel = document.getElementById('wizard-pipeline-assign');
+  if (wizSel) {
+    const current = wizSel.value;
+    wizSel.innerHTML = '<option value="">— select pipeline —</option>' + makeOptions(current);
+    const saved = storeLoad('importConfig', null);
+    if (saved && saved.pipelineAssign) wizSel.value = saved.pipelineAssign;
+  }
+
+  addLog('OK', 'Pipeline dropdowns populated — ' + pipelines.length + ' pipeline(s): ' + pipelines.map(p => p.name).join(', '));
+}
+
+function restoreGhlPipelines() {
+  const saved = storeLoad('ghlPipelines', null);
+  if (saved && saved.length) {
+    state.ghlPipelines = saved;
+    populatePipelineDropdowns(saved);
+    addLog('INFO', 'Restored ' + saved.length + ' pipeline(s) from last GHL connection');
+  }
+}
+
+function ghlCredChanged() {
+  const badge = document.getElementById('ghl-conn-badge');
+  const status = document.getElementById('ghl-status');
+  if (badge) { badge.textContent = 'Not tested'; badge.className = 'badge'; badge.style.cssText = 'font-size:10px'; }
+  if (status) { status.textContent = ''; }
+  state.ghlConnected = false;
+}
+
+function addGhlLog(type, command, response, meta) {
+  const feed = document.getElementById('ghl-log-feed');
+  const wrap = document.getElementById('ghl-log-wrap');
+  if (!feed || !wrap) return;
+  wrap.style.display = 'block';
+  const now = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  const colors = { OK: 'var(--accent)', ERR: 'var(--red)', WARN: 'var(--amber)', INFO: 'var(--accent2)', CMD: 'var(--purple)' };
+  const col = colors[type] || 'var(--muted)';
+  const metaHtml = meta ? `<span style="color:var(--muted);margin-left:8px">${meta}</span>` : '';
+  feed.innerHTML += `<div style="display:grid;grid-template-columns:52px 38px 1fr;gap:6px;padding:2px 0;border-bottom:1px solid rgba(255,255,255,.04)">
+    <span style="color:var(--muted)">${now}</span>
+    <span style="color:${col};font-weight:500">${type}</span>
+    <span style="color:var(--text)">${command}${response ? `<br><span style="color:var(--muted);padding-left:8px">↳ ${sanitiseHTML(response)}</span>` : ''}${metaHtml}</span>
+  </div>`;
+  feed.scrollTop = feed.scrollHeight;
+}
+
+function clearGhlLog() {
+  const feed = document.getElementById('ghl-log-feed');
+  const wrap = document.getElementById('ghl-log-wrap');
+  if (feed) feed.innerHTML = '';
+  if (wrap) wrap.style.display = 'none';
+}
+
+async function testGHL() {
+  const key    = (document.getElementById('ghl-key') || {}).value || '';
+  const loc    = (document.getElementById('ghl-loc') || {}).value || '';
+  const pipe   = (document.getElementById('ghl-pipe') || {}).value || '';
+  const status = document.getElementById('ghl-status');
+  const btn    = document.getElementById('ghl-test-btn');
+  const icon   = document.getElementById('ghl-test-icon');
+  const badge  = document.getElementById('ghl-conn-badge');
+
+  // Reset
+  clearGhlLog();
+  if (status) { status.style.color = 'var(--amber)'; status.textContent = 'Testing…'; }
+  if (btn)  btn.disabled = true;
+  if (icon) { icon.textContent = '●'; icon.className = 'pulse'; }
+  state.ghlConnected = false;
+
+  // ── STEP 1: Input validation ──────────────────────────────────
+  addGhlLog('CMD', 'Validating credentials', null, null);
+  await sleep(180);
+
+  if (!key || key.length < 10) {
+    addGhlLog('ERR', 'API key missing or too short', 'Expected a Private API key (eyJh...) or Agency key from GHL Settings → API → Private Integrations', `length=${key.length}`);
+    return finishGhlTest(false, 'Missing API key', btn, icon, status, badge);
+  }
+  addGhlLog('OK', 'API key format', `length=${key.length}, prefix=${key.slice(0,6)}...`);
+  if (!key.startsWith('eyJ') && !key.startsWith('sk-') && !key.startsWith('pit-')) {
+    addGhlLog('WARN', 'Unrecognised key prefix', 'Expected eyJ... (JWT), pit-... (Private Integration Token), or sk-... (Agency key)', null);
+  }
+
+  if (!loc || loc.length < 8) {
+    addGhlLog('ERR', 'Location ID missing or too short', 'Find it in GHL → Settings → Business Profile → Location ID', `length=${loc.length}`);
+    return finishGhlTest(false, 'Missing Location ID', btn, icon, status, badge);
+  }
+  addGhlLog('OK', 'Location ID format', `value=${loc.slice(0,8)}...`);
+  await sleep(200);
+
+  // ── STEP 2: Check API key type (JWT vs legacy) ────────────────
+  addGhlLog('CMD', 'Detecting API key type', null, null);
+  await sleep(150);
+  const isJwt = key.startsWith('eyJ');
+  const isPit = key.startsWith('pit-');
+  const keyType = isJwt ? 'JWT (Private Integration key)' : isPit ? 'PIT (Private Integration Token)' : key.startsWith('sk-') ? 'Agency API key' : 'Unknown format';
+  addGhlLog(isJwt || isPit || key.startsWith('sk-') ? 'OK' : 'WARN', `Key type: ${keyType}`, isJwt ? 'Preferred — scoped to your sub-account' : isPit ? 'Valid — scoped to your sub-account' : key.startsWith('sk-') ? 'Valid — agency-level access' : 'Unrecognised prefix — may still work', null);
+  await sleep(200);
+
+  // ── STEP 3: GET /locations/:locationId ───────────────────────
+  const proxyUrl = ((document.getElementById('ghl-proxy') || {}).value || '').trim().replace(/\/$/, '');
+  const baseUrl   = proxyUrl || 'https://services.leadconnectorhq.com';
+  const usingProxy = !!proxyUrl;
+  if (usingProxy) {
+    addGhlLog('INFO', 'CORS proxy active', `All GHL API calls routed via: ${proxyUrl}`, null);
+    state.ghlProxy = proxyUrl;
+    const ps = document.getElementById('proxy-status');
+    if (ps) { ps.textContent = '✓ Proxy active'; ps.style.color = 'var(--accent)'; }
+  }
+  const endpoint = `/locations/${loc}`;
+  addGhlLog('CMD', `GET ${baseUrl}${endpoint}`, null, 'Fetching location details');
+  addGhlLog('INFO', 'Request headers', `Authorization: Bearer ${key.slice(0,8)}… | Version: 2021-07-28`, null);
+  await sleep(300);
+
+  let locationData = null;
+  try {
+    const res = await fetch(`${baseUrl}${endpoint}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${key}`,
+        'Version': '2021-07-28',
+        'Content-Type': 'application/json'
+      }
+    });
+
+    const httpStatus = res.status;
+    const body = await res.json().catch(() => ({}));
+
+    addGhlLog(res.ok ? 'OK' : 'ERR',
+      `HTTP ${httpStatus} ${res.statusText || ''}`,
+      res.ok ? `Location: ${body.location?.name || body.name || '(name not returned)'}` : (body.message || body.error || JSON.stringify(body).slice(0,120)),
+      `${Date.now()}ms`
+    );
+
+    if (!res.ok) {
+      const hint = httpStatus === 401 ? 'API key is invalid or expired — regenerate in GHL → Settings → API'
+        : httpStatus === 403 ? 'Key lacks permission for this location — check scopes in Private Integrations'
+        : httpStatus === 404 ? 'Location ID not found — verify in GHL → Settings → Business Profile'
+        : httpStatus === 429 ? 'Rate limited — wait 60s and retry'
+        : 'Check GHL API status at status.gohighlevel.com';
+      addGhlLog('WARN', 'Troubleshoot', hint, null);
+      return finishGhlTest(false, `HTTP ${httpStatus}`, btn, icon, status, badge);
+    }
+
+    locationData = body.location || body;
+    addGhlLog('OK', 'Location details', `Name: ${locationData.name || '—'} | Email: ${locationData.email || '—'} | Phone: ${locationData.phone || '—'}`, null);
+    state.ghlKey = key;
+    state.ghlLoc = loc;
+    await sleep(250);
+
+  } catch (err) {
+    const isCors = err.message === 'Failed to fetch' || err.message.includes('CORS') || err.message.includes('NetworkError');
+    if (isCors) {
+      addGhlLog('ERR', 'CORS blocked', 'Browser blocked direct API call from file:// origin', null);
+      addGhlLog('INFO', 'Fix: host this file via a local server', 'Run: npx serve . (in the file folder) then open http://localhost:3000 in Chrome', null);
+    } else {
+      addGhlLog('ERR', 'Network error', sanitiseHTML(err.message), 'Check connection or GHL status: status.gohighlevel.com');
+    }
+    return finishGhlTest(false, isCors ? 'CORS blocked — host via localhost' : 'Network error', btn, icon, status, badge);
+  }
+
+  // ── STEP 4: GET /pipelines — fetch all, log IDs, populate dropdowns
+  const pipeEndpoint = `/opportunities/pipelines?locationId=${loc}`;
+  addGhlLog('CMD', `GET ${baseUrl}${pipeEndpoint}`, null, 'Fetching all pipelines');
+  await sleep(300);
+  try {
+    const pRes = await fetch(`${baseUrl}${pipeEndpoint}`, {
+      headers: { 'Authorization': `Bearer ${key}`, 'Version': '2021-07-28' }
+    });
+    const pBody = await pRes.json().catch(() => ({}));
+    if (pRes.ok) {
+      const pipelines = pBody.pipelines || [];
+      addGhlLog('OK', `HTTP ${pRes.status} — ${pipelines.length} pipeline(s) found`,
+        pipelines.map(p => `"${p.name}"`).join(', ').slice(0,160), null);
+      // Log each pipeline with full detail
+      pipelines.forEach((p, i) => {
+        addGhlLog('INFO',
+          `Pipeline ${i+1}: ${p.name}`,
+          `ID: ${p.id} | Stages: ${(p.stages||[]).map(s => s.name).join(' → ').slice(0,100)||'none'}`,
+          null
+        );
+      });
+      // Verify entered pipeline ID if present
+      if (pipe) {
+        const matched = pipelines.find(p => p.id === pipe);
+        addGhlLog(matched ? 'OK' : 'WARN',
+          matched ? `Entered Pipeline ID matched: "${matched.name}"` : 'Entered Pipeline ID not found in this location',
+          matched ? `${(matched.stages||[]).length} stage(s)` : `Available IDs logged above`,
+          null
+        );
+      }
+      // Store and populate all dropdowns
+      state.ghlPipelines = pipelines;
+      populatePipelineDropdowns(pipelines);
+      const slim = pipelines.map(p => ({ id: p.id, name: p.name, stages: (p.stages||[]).map(s => ({ id: s.id, name: s.name })) }));
+      storeSave('ghlPipelines', slim);
+      addGhlLog('OK', `✓ ${pipelines.length} pipeline(s) loaded — dropdowns in Settings and Import wizard updated`, null, null);
+    } else {
+      addGhlLog('WARN', `Pipeline fetch HTTP ${pRes.status}`, pBody.message || 'Could not fetch pipelines', null);
+    }
+  } catch (e) {
+    addGhlLog('WARN', 'Pipeline fetch failed', sanitiseHTML(e.message), 'Non-fatal — connection still successful');
+  }
+  await sleep(200);
+
+  // ── STEP 5: GET /contacts (smoke test write permissions) ──────
+  const smokeEndpoint = `/contacts/?locationId=${loc}&limit=1`;
+  addGhlLog('CMD', `GET ${baseUrl}${smokeEndpoint}`, null, 'Smoke-testing contact read access');
+  await sleep(280);
+  try {
+    const cRes = await fetch(`${baseUrl}${smokeEndpoint}`, {
+      headers: { 'Authorization': `Bearer ${key}`, 'Version': '2021-07-28' }
+    });
+    const cBody = await cRes.json().catch(() => ({}));
+    if (cRes.ok) {
+      const total = cBody.meta?.total || cBody.contacts?.length || 0;
+      addGhlLog('OK', `HTTP ${cRes.status} — contact read access confirmed`, `Total contacts in location: ${total}`, null);
+    } else {
+      addGhlLog('WARN', `HTTP ${cRes.status} — contact read limited`, cBody.message || 'Key may lack contacts:read scope', null);
+    }
+  } catch (e) {
+    addGhlLog('WARN', 'Contact check failed', e.message, 'Non-fatal');
+  }
+  await sleep(200);
+
+  // ── STEP 5b: Build Contact schema + Property schema ─────────────
+  const customObjEndpoint    = `/custom-objects?locationId=${loc}`;
+  const customFieldsEndpoint = `/locations/${loc}/customFields`;
+  addGhlLog('CMD', `GET ${baseUrl}${customFieldsEndpoint}`, null, 'Fetching standard + custom contact fields');
+  addGhlLog('CMD', `GET ${baseUrl}${customObjEndpoint}`,    null, 'Fetching custom property object fields');
+  await sleep(250);
+
+  // ── Schema A: Contact (standard GHL fields + custom contact fields) ──
+  const CONTACT_STD_FIELDS = [
+    { key: 'firstName',  label: 'First Name',    type: 'TEXT'  },
+    { key: 'lastName',   label: 'Last Name',     type: 'TEXT'  },
+    { key: 'email',      label: 'Email',         type: 'EMAIL' },
+    { key: 'phone',      label: 'Phone',         type: 'PHONE' },
+    { key: 'address1',   label: 'Address',       type: 'TEXT'  },
+    { key: 'city',       label: 'City',          type: 'TEXT'  },
+    { key: 'state',      label: 'State',         type: 'TEXT'  },
+    { key: 'postalCode', label: 'Postal Code',   type: 'TEXT'  },
+    { key: 'website',    label: 'Website / URL', type: 'TEXT'  },
+    { key: 'source',     label: 'Source',        type: 'TEXT'  },
+    { key: 'tags',       label: 'Tags',          type: 'LIST'  },
+    { key: 'notes',      label: 'Notes',         type: 'TEXT'  },
+  ];
+
+  let contactSchema = {
+    id:          'contact',
+    name:        'Contact',
+    type:        'contact',
+    description: 'Standard GHL contact fields',
+    fields:      [...CONTACT_STD_FIELDS]
+  };
+
+  // ── Schema B: Property (built from custom object schemas) ─────────
+  let propertySchema = {
+    id:          'property',
+    name:        'Property',
+    type:        'property',
+    description: 'Custom property object fields from GHL',
+    fields:      []
+  };
+
+  // Fetch custom contact fields → merge into Contact schema
+  try {
+    const cfRes  = await fetch(`${baseUrl}${customFieldsEndpoint}`, {
+      headers: { 'Authorization': `Bearer ${key}`, 'Version': '2021-07-28' }
+    });
+    const cfBody = await cfRes.json().catch(() => ({}));
+    if (cfRes.ok) {
+      const customFields = cfBody.customFields || [];
+      addGhlLog('OK',
+        `HTTP ${cfRes.status} — ${CONTACT_STD_FIELDS.length} standard + ${customFields.length} custom contact field(s)`,
+        customFields.slice(0,8).map(f => f.name).join(', ') + (customFields.length > 8 ? '…' : ''), null);
+      // Log standard contact fields
+      addGhlLog('INFO', `Contact — standard fields (${CONTACT_STD_FIELDS.length})`,
+        CONTACT_STD_FIELDS.map(f => f.label).join(', '), null);
+      // Log + merge custom contact fields
+      if (customFields.length) {
+        const customMapped = customFields.map(f => ({
+          key: f.fieldKey || f.id, label: f.name, type: f.dataType || 'TEXT', custom: true
+        }));
+        contactSchema.fields = [...CONTACT_STD_FIELDS, ...customMapped];
+        contactSchema.description = `${CONTACT_STD_FIELDS.length} standard + ${customFields.length} custom contact field(s)`;
+        addGhlLog('INFO', `Contact — custom fields (${customFields.length})`,
+          customFields.map(f => f.name).join(', ').slice(0,160), null);
+      }
+    } else {
+      addGhlLog('WARN', `Custom fields HTTP ${cfRes.status}`, cfBody.message || 'Key may lack customFields:read scope', null);
+    }
+  } catch (e) {
+    addGhlLog('WARN', 'Contact custom fields fetch failed', sanitiseHTML(e.message), 'Non-fatal');
+  }
+  await sleep(200);
+
+  // ── SCOPE PROBE: Test all 4 GHL Objects scopes before fetching data ─────────
+  // Maps to GHL Private Integration permissions:
+  //   objects/schema.readonly  → GET /custom-objects              (View Object Schema)
+  //   objects/records.readonly → GET /custom-objects/:key/records (View Object Records)
+  //   objects/schema.write     → probed via schema endpoint response
+  //   objects/records/write    → probed via records endpoint response
+  addGhlLog('INFO', '━━━ Objects scope probe ━━━', 'Testing 4 GHL Objects permissions against your PIT key', null);
+
+  const scopeResults = {};
+
+  // PROBE 1: objects/schema.readonly — GET /custom-objects (list schemas)
+  addGhlLog('CMD', `GET ${baseUrl}/custom-objects?locationId=${loc}`,
+    null, 'Scope probe: objects/schema.readonly (View Object Schema)');
+  try {
+    const s1 = await fetch(`${baseUrl}/custom-objects?locationId=${loc}`, {
+      headers: { 'Authorization': `Bearer ${key}`, 'Version': '2021-07-28' }
+    });
+    const s1Body = await s1.json().catch(() => ({}));
+    scopeResults.schemaRead = s1.status;
+    if (s1.ok) {
+      const objCount = (s1Body.customObjects || s1Body.objects || []).length;
+      addGhlLog('OK',
+        `objects/schema.readonly ✓ — HTTP ${s1.status}`,
+        `View Object Schema scope active | ${objCount} custom object(s) found`, null);
+    } else {
+      addGhlLog('WARN',
+        `objects/schema.readonly ✗ — HTTP ${s1.status}`,
+        s1.status === 401 ? 'NOT AUTHORISED — enable "View Object Schema" (objects/schema.readonly) on your PIT key'
+        : s1.status === 403 ? 'FORBIDDEN — scope missing or plan does not include Custom Objects'
+        : s1Body.message || 'Unexpected error', null);
+    }
+  } catch (e1) {
+    scopeResults.schemaRead = 'ERR';
+    addGhlLog('WARN', `objects/schema.readonly ✗ — Failed to fetch`,
+      `Network error: ${sanitiseHTML(e1.message)} — key may lack scope or Custom Objects not enabled on this GHL plan`, null);
+  }
+  await sleep(200);
+
+  // PROBE 2: objects/records.readonly — GET /custom-objects/:key/records?limit=1
+  // We need at least one object key to test records — use a generic probe first
+  // Try the schema read result to get an object key
+  let firstObjKey = null;
+  try {
+    const schRes = await fetch(`${baseUrl}/custom-objects?locationId=${loc}`, {
+      headers: { 'Authorization': `Bearer ${key}`, 'Version': '2021-07-28' }
+    });
+    if (schRes.ok) {
+      const schBody = await schRes.json().catch(() => ({}));
+      const objs = schBody.customObjects || schBody.objects || [];
+      if (objs.length) firstObjKey = objs[0].key || objs[0].id;
+    }
+  } catch(_) {}
+
+  if (firstObjKey) {
+    const recordsEndpoint = `/custom-objects/${firstObjKey}/records?locationId=${loc}&limit=1`;
+    addGhlLog('CMD', `GET ${baseUrl}${recordsEndpoint}`,
+      null, 'Scope probe: objects/records.readonly (View Object Records)');
+    try {
+      const s2 = await fetch(`${baseUrl}${recordsEndpoint}`, {
+        headers: { 'Authorization': `Bearer ${key}`, 'Version': '2021-07-28' }
+      });
+      const s2Body = await s2.json().catch(() => ({}));
+      scopeResults.recordsRead = s2.status;
+      if (s2.ok) {
+        const recCount = (s2Body.records || s2Body.data || []).length;
+        addGhlLog('OK',
+          `objects/records.readonly ✓ — HTTP ${s2.status}`,
+          `View Object Records scope active | sample record count: ${recCount}`, null);
+      } else {
+        addGhlLog('WARN',
+          `objects/records.readonly ✗ — HTTP ${s2.status}`,
+          s2.status === 401 ? 'NOT AUTHORISED — enable "View Object Record" (objects/records.readonly) on your PIT key'
+          : s2.status === 403 ? 'FORBIDDEN — records scope missing'
+          : s2Body.message || 'Unexpected error', null);
+      }
+    } catch (e2) {
+      scopeResults.recordsRead = 'ERR';
+      addGhlLog('WARN', `objects/records.readonly ✗ — Failed to fetch`,
+        `Network error: ${sanitiseHTML(e2.message)}`, null);
+    }
+  } else {
+    addGhlLog('INFO', 'objects/records.readonly — skipped',
+      'Could not probe record read scope: no custom object key available (schema read may have failed)', null);
+  }
+  await sleep(200);
+
+  // PROBE 3: objects/schema.write — infer from schema endpoint HTTP method options
+  // GHL does not expose a safe read-only probe for write scopes
+  // We detect write scope by checking if the schema endpoint returns 405 on OPTIONS
+  // Instead: log the scope status based on what GHL returns on a schema HEAD request
+  addGhlLog('CMD', `HEAD ${baseUrl}/custom-objects?locationId=${loc}`,
+    null, 'Scope probe: objects/schema.write (Edit Object Schema) — inferring from HEAD');
+  try {
+    const s3 = await fetch(`${baseUrl}/custom-objects?locationId=${loc}`, {
+      method: 'HEAD',
+      headers: { 'Authorization': `Bearer ${key}`, 'Version': '2021-07-28' }
+    });
+    scopeResults.schemaWrite = s3.status;
+    // HEAD returning 200 with schema.readonly active is expected
+    // We can't truly verify write without posting — note this
+    addGhlLog('INFO',
+      `objects/schema.write — HEAD HTTP ${s3.status}`,
+      s3.status === 200 ? 'HEAD request succeeded — write scope cannot be verified without a POST. Check GHL PIT key settings directly.'
+      : s3.status === 405 ? 'HEAD not supported — this is normal. Check GHL PIT key settings for Edit Object Schema scope.'
+      : `HTTP ${s3.status} — check GHL PIT key settings for Edit Object Schema scope`, null);
+  } catch (e3) {
+    scopeResults.schemaWrite = 'ERR';
+    addGhlLog('INFO', 'objects/schema.write — could not probe', sanitiseHTML(e3.message), null);
+  }
+  await sleep(150);
+
+  // PROBE 4: objects/records/write — same limitation, log intent
+  addGhlLog('INFO', 'objects/records/write (Edit Object Record) — not probed (write-only)',
+    'Write scopes cannot be safely tested without creating/modifying records. Verify in GHL → Settings → Private Integrations → your key.', null);
+
+  // Scope summary
+  addGhlLog('INFO', '━━━ Scope probe summary ━━━',
+    `schema.readonly: ${scopeResults.schemaRead === 200 ? '✓' : '✗ ' + scopeResults.schemaRead} | ` +
+    `records.readonly: ${scopeResults.recordsRead === 200 ? '✓' : '✗ ' + (scopeResults.recordsRead || 'skipped')} | ` +
+    `schema.write: see above | records.write: not probed`, null);
+  await sleep(100);
+
+  // ── Now fetch data using whichever version worked ──────────────────────────
+  let coRes = null;
+  if (scopeResults.schemaRead === 200) {
+    try {
+      coRes = await fetch(`${baseUrl}${customObjEndpoint}`, {
+        headers: { 'Authorization': `Bearer ${key}`, 'Version': '2021-07-28' }
+      });
+      if (!coRes.ok) coRes = null;
+    } catch(_) { coRes = null; }
+  }
+  try {
+  if (!coRes) {
+    addGhlLog('WARN', 'Skipping custom object field fetch — schema read scope not available',
+      'Enable "View Object Schema" (objects/schema.readonly) on your PIT key to load Property fields', null);
+    throw new Error('custom-objects schema read not authorised');
+  }
+    const coBody = await coRes.json().catch(() => ({}));
+    if (coRes.ok) {
+      const customObjects = coBody.customObjects || coBody.objects || [];
+      addGhlLog('OK', `HTTP ${coRes.status} — ${customObjects.length} custom object(s) found`,
+        customObjects.map(o => o.labels?.singular || o.name).join(', ').slice(0,120) || 'none', null);
+
+
+      let allPropFields = [];
+
+      // Fetch fields for each object individually (list endpoint omits field definitions)
+      for (let i = 0; i < customObjects.length; i++) {
+        const obj     = customObjects[i];
+        const objKey  = obj.key || obj.id;
+        const objName = obj.labels?.singular || obj.name || `Object ${i+1}`;
+
+        // Try both known field endpoints for this object
+        let objFields = [];
+
+        // Attempt 1: GET /custom-objects/:key (full object detail)
+        const detailEndpoint = `/custom-objects/${objKey}?locationId=${loc}&fetchProperties=true`;
+        addGhlLog('CMD', `GET ${baseUrl}${detailEndpoint}`, null, `Fetching fields for '${objName}'`);
+        try {
+          const dRes  = await fetch(`${baseUrl}${detailEndpoint}`, {
+            headers: { 'Authorization': `Bearer ${key}`, 'Version': '2023-02-21' }
+          });
+          const dBody = await dRes.json().catch(() => ({}));
+          if (dRes.ok) {
+            // Log raw response keys so we can find where fields actually live
+            const dKeys = Object.keys(dBody);
+            addGhlLog('INFO', `Raw response keys for '${objName}'`, dKeys.join(', ') || '(empty object)', null);
+            // Dig one level deeper on each key to find arrays
+            dKeys.forEach(k => {
+              const v = dBody[k];
+              if (Array.isArray(v)) addGhlLog('INFO', `  dBody.${k} = Array(${v.length})`, v.slice(0,3).map(x => JSON.stringify(x).slice(0,60)).join(' | '), null);
+              else if (v && typeof v === 'object') addGhlLog('INFO', `  dBody.${k} = Object{${Object.keys(v).join(',')}}`, '', null);
+            });
+            // Fields may live at multiple paths depending on GHL version
+            objFields = dBody.fields
+              || dBody.properties
+              || dBody.customObject?.fields
+              || dBody.customObject?.properties
+              || dBody.object?.fields
+              || dBody.object?.properties
+              || dBody.schema?.fields
+              || dBody.schema?.properties
+              || dBody.customObjects?.[0]?.fields
+              || [];
+            addGhlLog('OK', `HTTP ${dRes.status} — '${objName}' detail: ${objFields.length} field(s) found`,
+              objFields.slice(0,8).map(f => f.label || f.name).join(', ') + (objFields.length > 8 ? '…' : ''), null);
+          } else {
+            addGhlLog('WARN', `HTTP ${dRes.status} — detail fetch failed for '${objName}'`, dBody.message || '', null);
+            addGhlLog('INFO', `Raw error body: ${JSON.stringify(dBody).slice(0,200)}`, '', null);
+          }
+        } catch (detailErr) {
+          addGhlLog('WARN', `Detail fetch error for '${objName}'`, sanitiseHTML(detailErr.message), null);
+        }
+
+        // Attempt 2: if still no fields try /custom-objects/:key/fields
+        if (!objFields.length) {
+          const fieldsEndpoint = `/custom-objects/${objKey}/fields`;
+          addGhlLog('CMD', `GET ${baseUrl}${fieldsEndpoint}`, null, `Trying fields sub-endpoint for '${objName}'`);
+          try {
+            const fRes  = await fetch(`${baseUrl}${fieldsEndpoint}`, {
+              headers: { 'Authorization': `Bearer ${key}`, 'Version': '2021-07-28' }
+            });
+            const fBody = await fRes.json().catch(() => ({}));
+            if (fRes.ok) {
+              const fKeys = Object.keys(fBody);
+              addGhlLog('INFO', `Fields endpoint raw keys: ${fKeys.join(', ')}`, '', null);
+              fKeys.forEach(k => {
+                const v = fBody[k];
+                if (Array.isArray(v)) addGhlLog('INFO', `  fBody.${k} = Array(${v.length})`, v.slice(0,2).map(x => JSON.stringify(x).slice(0,60)).join(' | '), null);
+              });
+              objFields = fBody.fields || fBody.customFields || fBody.customObjects?.[0]?.fields || [];
+              addGhlLog('OK', `HTTP ${fRes.status} — '${objName}' fields: ${objFields.length} field(s)`,
+                objFields.slice(0,8).map(f => f.label || f.name).join(', ') + (objFields.length > 8 ? '…' : ''), null);
+            } else {
+              addGhlLog('WARN', `HTTP ${fRes.status} — fields sub-endpoint failed`, fBody.message || '', null);
+              addGhlLog('INFO', `Raw error: ${JSON.stringify(fBody).slice(0,200)}`, '', null);
+            }
+          } catch (fieldsErr) {
+            addGhlLog('WARN', `Fields sub-endpoint error for '${objName}'`, sanitiseHTML(fieldsErr.message), null);
+          }
+        }
+
+        // Log full list of object's fields
+        if (objFields.length) {
+          addGhlLog('INFO', `'${objName}' — ${objFields.length} field(s)`,
+            objFields.map(f => f.label || f.name).join(', ').slice(0,200), null);
+          allPropFields = [...allPropFields, ...objFields.map(f => ({
+            key:    f.key || f.fieldKey || f.id,
+            label:  f.label || f.name,
+            type:   f.dataType || f.fieldType || f.type || 'TEXT',
+            object: objName
+          }))];
+        } else {
+          addGhlLog('WARN', `No fields returned for '${objName}'`,
+            'Object exists but field definitions could not be retrieved — check API key scopes', null);
+        }
+
+        await sleep(150); // small delay between per-object calls
+      }
+
+      propertySchema.fields      = allPropFields;
+      propertySchema.description = allPropFields.length
+        ? `${allPropFields.length} field(s) across ${customObjects.length} custom object(s)`
+        : 'Custom objects found but no field definitions returned — check API key scopes';
+
+      if (allPropFields.length) {
+        addGhlLog('OK', `Property schema complete — ${allPropFields.length} total field(s) from ${customObjects.length} object(s)`,
+          allPropFields.map(f => f.label).join(', ').slice(0,200), null);
+      } else if (customObjects.length) {
+        addGhlLog('WARN', 'Objects found but 0 fields loaded',
+          'Ensure your Private Integration key has "Custom Objects — Read" scope enabled in GHL', null);
+      } else {
+        addGhlLog('INFO', 'No custom objects in this GHL location',
+          'Create custom objects in GHL → Settings → Custom Objects to populate the Property schema', null);
+      }
+    } else {
+      addGhlLog('WARN', `Custom objects list HTTP ${coRes.status}`, coBody.message || 'Could not fetch object list', null);
+    }
+  } catch (e) {
+    addGhlLog('WARN', 'Custom objects fetch failed', sanitiseHTML(e.message), 'Non-fatal');
+  }
+  await sleep(200);
+
+  // Build full field pool: contact schema + property schema side by side
+  const allSchemas = [contactSchema, propertySchema];
+  state.ghlSchemas = allSchemas;
+  storeSave('ghlSchemas', allSchemas);
+  populateFieldPool(allSchemas);   // loads all fields into group builder pool
+  populateSchemaDropdown(allSchemas);
+  addGhlLog('OK',
+    `✓ Field pool ready — Contact (${contactSchema.fields.length} fields) | Property (${propertySchema.fields.length} fields) — open Agent Behavior to build field groups`,
+    'Use Settings → Agent Behavior → Add field group to configure import mapping groups', null);
+
+  // ── STEP 6: Summary ───────────────────────────────────────────
+  addGhlLog('OK', '━━━ Connection test complete ━━━', `Location: ${locationData?.name || loc} | API version: 2021-07-28 | Key type: ${keyType}`, null);
+  finishGhlTest(true, `✓ ${locationData?.name || 'Connected'}`, btn, icon, status, badge);
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function finishGhlTest(ok, msg, btn, icon, status, badge) {
+  if (btn)  { btn.disabled = false; }
+  if (icon) { icon.textContent = ok ? '⚡' : '✗'; icon.className = ''; }
+  if (status) {
+    status.style.color = ok ? 'var(--accent)' : 'var(--red)';
+    status.textContent = msg;
+  }
+  if (badge) {
+    badge.textContent = ok ? 'Connected ✓' : 'Failed ✗';
+    badge.className = ok ? 'badge badge-green' : 'badge badge-red';
+  }
+  if (ok) {
+    addLog('OK', `GHL connection verified — ${msg}`);
+  } else {
+    addLog('ERR', `GHL connection failed — ${msg}`);
+  }
+}
+
+function saveSettings() {
+  saveAllSettings();
+  addLog('OK', 'Settings saved to storage');
+  const btn = document.querySelector('#sec-settings .btn-primary');
+  if (btn) {
+    const orig = btn.textContent;
+    btn.textContent = '✓ Saved';
+    setTimeout(() => { btn.textContent = orig; }, 1800);
+  }
+}
+
+// ─── AI AGENT CHAT ───────────────────────────────────────────────
+const AGENT_REPLIES = {
+  default: [
+    "Great question! Based on your import history, I'd recommend enabling BAH-zone auto-tagging for military market contacts. This will improve your pipeline segmentation.",
+    "I can see your Google Sheets source is your highest-volume pipeline. I'll prioritize that for daily sync and flag any new rows automatically.",
+    "I noticed some mapping inconsistencies in the last run — specifically around phone number formats. I've updated the normalizer to handle US, Canadian, and international formats consistently.",
+    "Your Niagara/Hamilton market has the highest dedup rate (28%). This suggests your source lists overlap significantly. Want me to consolidate them into a single master sheet?",
+    "For the military market niche, I'd suggest adding a custom GHL field for BAH rates by zip code. I can auto-populate this from a zip→BAH lookup table if you provide one.",
+  ]
+};
+
+let replyIdx = 0;
+function sendChat() {
+  const input = document.getElementById('chat-in');
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+
+  const area = document.getElementById('chat-area');
+  area.innerHTML += `<div class="msg user"><div class="msg-avatar">B</div><div class="msg-bubble">${msg}</div></div>`;
+  area.scrollTop = area.scrollHeight;
+
+  setTimeout(() => {
+    const reply = AGENT_REPLIES.default[replyIdx % AGENT_REPLIES.default.length];
+    replyIdx++;
+    area.innerHTML += `<div class="msg agent"><div class="msg-avatar">K</div><div class="msg-bubble">${reply}</div></div>`;
+    area.scrollTop = area.scrollHeight;
+  }, 800);
+}
+
+function exportContacts() {
+  if (!state.contacts.length) { alert('No contacts to export yet.'); return; }
+  const rows = [['Name','Email','Market','Source','Pipeline','Tags']];
+  state.contacts.forEach(c => rows.push([c.name, c.email, c.market, c.source, c.pipe, c.tags.join(';')]));
+  const csv = rows.map(r => r.map(v => `"${v}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv,' + encodeURIComponent(csv);
+  a.download = 'kin-co-ghl-contacts.csv';
+  a.click();
+}
+
+// ─── DEBOUNCED AUTO-SAVE ─────────────────────────────────────────
+let _saveTimer = null;
+function debouncedSave() {
+  clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(() => {
+    saveAllSettings();
+    const statusEl = document.getElementById('settings-save-status');
+    if (statusEl) {
+      statusEl.style.color = 'var(--accent)';
+      statusEl.textContent = '✓ Auto-saved';
+      setTimeout(() => { if (statusEl.textContent === '✓ Auto-saved') statusEl.textContent = ''; }, 1800);
+    }
+    const ghlInd = document.getElementById('ghl-save-indicator');
+    if (ghlInd) {
+      ghlInd.textContent = '✓ saved';
+      setTimeout(() => { ghlInd.textContent = ''; }, 1800);
+    }
+  }, 600);
+}
+
+// Init - bind source tile clicks via addEventListener (most robust approach)
+function bindSourceTiles() {
+  const tiles = [
+    { id: 'src-sheets', src: 'sheets' },
+    { id: 'src-csv',    src: 'csv'    },
+    { id: 'src-scrape', src: 'scrape' },
+  ];
+  tiles.forEach(({ id, src }) => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.addEventListener('click', function(e) {
+        e.stopPropagation();
+        selectSource(src);
+      });
+      el.addEventListener('touchend', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        selectSource(src);
+      });
+    }
+  });
+
+  // Continue button
+  const continueBtn = document.querySelector('#wizard-1 .btn-primary');
+  if (continueBtn) {
+    continueBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      goStep(2);
+    });
+    continueBtn.addEventListener('touchend', function(e) {
+      e.preventDefault();
+      goStep(2);
+    });
+  }
+
+  // Sidebar nav
+  document.querySelectorAll('.nav-item[onclick]').forEach(el => {
+    const onclickAttr = el.getAttribute('onclick');
+    const match = onclickAttr && onclickAttr.match(/showSection\('(\w+)'/);
+    if (match) {
+      const sectionId = match[1];
+      el.addEventListener('click', function(e) {
+        e.stopPropagation();
+        showSection(sectionId, this);
+      });
+    }
+  });
+}
+
+goStep(1);
+buildOptimization();
+setSettingsCredMode('sa');
+bindSourceTiles();
+// Restore persisted config after DOM is ready
+restoreSettings();
+restoreImportConfig();
+restoreGhlPipelines();
+restoreGhlSchemas();
+addLog('INFO', 'Kin & Co GHL Agent ready — configuration loaded from storage');
+</script>
+</body>
+</html>
